@@ -7,3 +7,5 @@
   - 集群部署
 # working on:  
   应用数据采集/所需数据种类工具调研
+# work finished:
+  - 基础环境搭建：ubuntu based on docker
