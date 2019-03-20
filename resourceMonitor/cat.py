@@ -2,10 +2,14 @@ import subprocess
 
 # Sets all COS to default (fill into all ways) and associates all cores with COS 0
 def resetCAT():
-    subprocess.run(['pqos','-R'])
+    if subprocess.getstatusoutput('pqos -R') == 1:
+        print('err')
 
 def getCpuInfo(pid):
-    subprocess.run(['sudo','pqos','-I','-p','all:'+str(pid)]) 
-	
+    return subprocess.getoutput('sudo pqos -I -p all:'+str(pid)]) 
+
+def getIpc(pic):
+    return 0.3
+    	
 getCpuInfo(6)
     
