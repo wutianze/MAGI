@@ -12,15 +12,19 @@ class SubSystem(Enum):
     QPS = 4
 
 class MAGIcontroller:
-    def __init__(self,cpu_policies):
+
+    # here the config file is different it has all the subsystems.ex:{app1:{cpu:{sla:{ipc:0.6},min:{cpu:8,llc:1}}},memory:{...}}
+    def __init__(self,configFile):
         self.logging.basicConfig(filename='logger.log',level=logging.INFO)
         self.logger = logging.getLogger('example1')
         self.enable_training = True
         self.sleep_interval = 10
+        self.configPolicies = json.loads(open(configFile,'r').read())
+ 
     
-    def loadConfig(self,subsys,driven,path):
-        tmp = json.loads(open(path,'r').read())
+    def initPolicy(self,subsys,driven,path):
         if subsys == CPU:
+            for 
             self.cpu_policies[driven] = tmp
         elif subsys == DISK:
             self.disk_policies[driven] = tmp
@@ -44,7 +48,7 @@ class MAGIcontroller:
             sample = self.try_to_add_sample()
 
             if self.enable_detecting:
-                self.check_cpu(sample)
+                self.check_sla(sample)
 
 # select the least-ipc group in sample
     def select_low_ipc_group(sample):
@@ -64,7 +68,7 @@ class MAGIcontroller:
 
     def do_measure_toplev_l1(self,group):
 
-    def check_cpu(self,sample):
+    def check_sla(self,sample):
         group = self.select_low_ipc_group(sample) #sample is a list filled with groups needed to be watched
 
         if group is not None:
@@ -85,10 +89,13 @@ class MAGIcontroller:
                 l1_sample = self.do_measure_toplev_l1(group)
                 deepupdate(sample,l1_sample)
 
-            targets = policy.select_throttle_target(sample)#find interference source
+            targets = policy.select_throttle_target(sample)#find interference source, the approaches data model uses and rule model uses are different,it depends on policy
 
             if len(targets) == 0:
                 self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
+                continue
+            else:
+                self.logger.info("using policy %s to make decision",policy.name)
                 self.set_throttle_setup(targets)                  #do throttle to interference source
                 break
 if __name__ == '__main__':

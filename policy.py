@@ -5,9 +5,13 @@ class POLICYS(Enum):
     RULE = 1
 
 class Policy:
-    def __init__(self,raw_config):
-        self.configFile = raw_config
+    def __init__(self,name,raw_config):
+        self.name = name
+        self.configJson = raw_config
         self.estimator = es.Estimator()
+
+    def select_throttle_target(self,sample):
+        pass
 
     def test(self):
         if self.estimator.workable() == True:
