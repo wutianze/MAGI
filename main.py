@@ -1,42 +1,30 @@
 import json
-import logging
+#import logging
 import policy
 import resourceMonitor as rM
 from enum import Enum
 
+'''
 class SubSystem(Enum):
     CPU = 0
     DISK = 1
     NET = 2
     DOWNSTREAM = 3
     QPS = 4
+'''
+sampleFile = 'samples.txt'
+class CpuController:
 
-class MAGIcontroller:
-
-    # here the config file is different it has all the subsystems.ex:{app1:{cpu:{sla:{ipc:0.6},min:{cpu:8,llc:1}}},memory:{...}}
-    def __init__(self,configFile):
+    def __init__(self,configFile,sampleFile):
         self.logging.basicConfig(filename='logger.log',level=logging.INFO)
         self.logger = logging.getLogger('example1')
         self.enable_training = True
         self.sleep_interval = 10
-        self.configPolicies = json.loads(open(configFile,'r').read())
- 
+        self.ipc_policies = json.loads(open(configFile,'r').read())
     
-    def initPolicy(self,subsys,driven,path):
-        if subsys == CPU:
-            for 
-            self.cpu_policies[driven] = tmp
-        elif subsys == DISK:
-            self.disk_policies[driven] = tmp
-        elif subsys == NET:
-            self.net_policies[driven] = tmp
-        elif subsys == DOWNSTREAM:
-            self.downstream_policies[driven] = tmp
-        elif subsys == QPS:
-            self.qps_policies[driven] = tmp
-        else:
-            logger.error("wrong subsys while load config file")
-
+    # when samples.txt changes, the list can be updated
+    def try_to_add_sample():
+        return list(map(str,open(sampleFile,'r').read().strip().split()) 
     def run(self):
         if self.enable_training:
             self.try_to_train_model()
@@ -48,7 +36,7 @@ class MAGIcontroller:
             sample = self.try_to_add_sample()
 
             if self.enable_detecting:
-                self.check_sla(sample)
+                self.check_cpu(sample)
 
 # select the least-ipc group in sample
     def select_low_ipc_group(sample):
@@ -68,7 +56,7 @@ class MAGIcontroller:
 
     def do_measure_toplev_l1(self,group):
 
-    def check_sla(self,sample):
+    def check_cpu(self,sample):
         group = self.select_low_ipc_group(sample) #sample is a list filled with groups needed to be watched
 
         if group is not None:
@@ -77,7 +65,7 @@ class MAGIcontroller:
             self.start_cpu_relax_analyst(sample)
 
     def start_cpu_throttle_analyst(self,group,sample):
-        policies = self.policies[group]
+        policies = self.ipc_policies[group]
 
         for p in [POLICYS.DATA_DRIVEN,POLICYS.RULE]:
             policy = policies[p]
@@ -89,14 +77,14 @@ class MAGIcontroller:
                 l1_sample = self.do_measure_toplev_l1(group)
                 deepupdate(sample,l1_sample)
 
-            targets = policy.select_throttle_target(sample)#find interference source, the approaches data model uses and rule model uses are different,it depends on policy
+            targets = policy.select_throttle_target(sample)
 
             if len(targets) == 0:
                 self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
                 continue
             else:
                 self.logger.info("using policy %s to make decision",policy.name)
-                self.set_throttle_setup(targets)                  #do throttle to interference source
+                self.set_throttle_setup(targets)
                 break
 if __name__ == '__main__':
 	configFileName = input("enter the config file path:")
