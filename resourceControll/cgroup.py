@@ -19,6 +19,7 @@ def quotaC(name,quota):
     app.controller.cfs_quota_us = int(quota)
 
 if __name__ == '__main__':
-    addProcs(input("pid:"),input("path"))
-    #createCgroup(input('subsystem:'),input('name:'))
+    #addProcs(input("pid:"),input("path"))
+    createCgroup(input('subsystem:'),input('name:'))
     #quotaC(input("appName:"),input(" quota value:"))
+    addProcs(input("pid:"),input("path"))

@@ -33,12 +33,21 @@ toEvent = {
     "machine_clear":     "cpu/event=0xc3,umask=0x1/" 
 }
 
+#return : [(group,event,count),...]
 def getInfoList(configs):
-    cmd_str = perfPath + " stat -A -a -x' '"
+    cmd_str = perfPath + " stat -a -x'|'"  # need to add -A ?
     for (event_name, group) in configs:
         cmd_str += " -e " + event_name + " -G " + group
     cmd_str += " -- sleep 2"
-    return subprocess.getoutput(cmd_str).strip().split()
+    forHandle =  subprocess.getoutput(cmd_str).strip().split('\n')
+    res = []
+    index = 0
+    for (event_name,group) in configs:
+        lineCon = forHandle[index].split('|')
+        res.append((group,event_name,lineCon[0]))
+        index = index + 1
+    return res
+    #return subprocess.getoutput(cmd_str).strip().split()
 
 if __name__ == '__main__':
     tu = ("branch","app1")
