@@ -21,10 +21,11 @@ class CpuController:
         self.enable_training = True
         self.sleep_interval = 10
         self.ipc_policies = json.loads(open(configFile,'r').read())
+        self.allGroups = list(map(str,open(sampleFile,'r').read().strip().split()) 
     
-    # when samples.txt changes, the list can be updated
+    # try to add the groups who break SLA
     def try_to_add_sample():
-        return list(map(str,open(sampleFile,'r').read().strip().split()) 
+    
     def run(self):
         if self.enable_training:
             self.try_to_train_model()
@@ -68,16 +69,14 @@ class CpuController:
         policies = self.ipc_policies[group]
 
         for p in [POLICYS.DATA_DRIVEN,POLICYS.RULE]:
-            policy = policies[p]
-
-            if p == POLICYS.DATA_DRIVEN and (not self.enable_data_driven or not policy.estimator.workable()):
+            if p == POLICYS.DATA_DRIVEN and (not self.enable_data_driven or not policies.estimator.workable()):
                 continue
 
             if p == POLICYS.RULE:
                 l1_sample = self.do_measure_toplev_l1(group)
                 deepupdate(sample,l1_sample)
 
-            targets = policy.select_throttle_target(sample)
+            targets = policies.select_throttle_target(sample)
 
             if len(targets) == 0:
                 self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
