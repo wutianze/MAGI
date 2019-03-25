@@ -1,7 +1,7 @@
 import subprocess
 
 avaTar = ["instructions","cycles","cpu/event=0xd0,umask=0x83/","cache-misses","cpu/event=0xd0,umask=0x21/","cpu/event=0xc7,umask=3/","cpu/event=0xc4,umask=0x0/","cpu/event=0xd1,umask=0x8/","cpu/event=0xd1,umask=0x10/","cpu/event=0xa2,umask=0x8/","cpu/event=0xc5,umask=0x4/","cpu/event=0xc3,umask=0x1/"]
-perfPath = '/home/sauron/perf'
+perfPath = 'perf'
 fromEvent = {
         "cpu/event=0xd0,umask=0x83/" : "loads_and_stores",
         "cpu/event=0x0e,umask=0x01/" : "uops_issued.any",
@@ -79,5 +79,5 @@ if __name__ == '__main__':
     #tu2 = ("cpu-clock","app1")
     #li = [tu,tu2]
     print("start test")
-    groups = ["app1","app2"]
+    groups = ["app1"]
     print(getAllInfo(groups))
