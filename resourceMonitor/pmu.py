@@ -13,8 +13,16 @@ def topDownGroup(group):
                 if float(lineS[7]) != 100 and res[lineS[0]][1] < float(lineS[2]):# 100 means the percent of time counter used,if 100 we ignore it because the app may not run on that CPU
                     res[lineS[0]] = (lineS[1],float(lineS[2]))
             else:
+                if float(lineS[7]) - 100 > -5:
+                    continue
                 res[lineS[0]] = (lineS[1],float(lineS[2]))
-    return res
+    maxB = 0
+    boundName = ""
+    for cpus in res.keys():
+        if res[cpus][1] >= maxB:
+            maxB = res[cpus][1]
+            boundName = res[cpus][0]
+    return boundName
 
 def topDownPid(pid):
     cmd = toplevPath + "-l1 -x'|' -S --no-desc -p " + str(pid) + " --quiet sleep 3"
