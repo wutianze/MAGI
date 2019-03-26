@@ -1,5 +1,7 @@
 import json
 #import logging
+import time
+
 import policy
 import resourceMonitor as rM
 from enum import Enum
@@ -11,16 +13,16 @@ RULEMEMBWBOUND = 35
 
 class CpuController:
     def __init__(self,configFile,sampleFile):
-        self.logging.basicConfig(filename='logger.log',level=logging.INFO)
-        self.logger = logging.getLogger('example1')
+        #self.logging.basicConfig('logger.log',logging.INFO)
+        #self.logger = logging.getLogger('example1')
         self.enable_training = True
         self.sleep_interval = 10
         self.ipc_policies = json.loads(open(configFile,'r').read())
-        self.allGroups = list(map(str,open(sampleFile,'r').read().strip().split()) 
+        self.allGroups = list(map(str,open(sampleFile,'r').read().strip().split()))
         self.currentInfo = {}
     
     # try to add the groups who break SLA
-    def try_to_add_sample():
+    def try_to_add_sample(self):
         self.currentInfo = rM.perf.getAllInfo(self.allGroups)
         samples = []
         for group in self.currentInfo.keys():
@@ -45,7 +47,7 @@ class CpuController:
                 self.check_cpu(sample)
 
 # select the least-ipc group in sample
-    def select_low_ipc_group(sample):
+    def select_low_ipc_group(self,sample):
         if len(sample) == 0:
             return None
         '''
@@ -65,7 +67,8 @@ class CpuController:
         least_ipc = 9999.9
         least_group = ""
         for group in sample:
-            if tmpIpc = float(self.currentInfo[group]["instructions"])/float(self.currentInfo[group]["cycles"] < least_ipc:
+            tmpIpc = float(self.currentInfo[group]["instructions"])/float(self.currentInfo[group]["cycles"])
+            if tmpIpc < least_ipc:
                 least_ipc = tmpIpc
                 least_group = group
         return least_group
@@ -79,10 +82,11 @@ class CpuController:
                 # llc-bound
                 if float(rM.cat.getMbw(rM.cgroup.getCgroupPids(group))/1024.0) < RULEMEMBWBOUND:
                     #TODO relax llc of victim etc
+                    pass
                 # mem-bw-bound
-                else:
+                else:pass
             # core-bound
-            else:
+            else:pass
         elif boundPart == "Frontend_Bound":
 
         else:
@@ -100,11 +104,11 @@ class CpuController:
     def start_cpu_throttle_analyst(self,group,sample):
         policy = self.ipc_policies[group]
 
-        for p in [POLICYS.DATA_DRIVEN,POLICYS.RULE]:
-            if p == POLICYS.DATA_DRIVEN and (not self.enable_data_driven or not policy.estimator.workable()):
+        for p in [policy.POLICYS.DATA_DRIVEN, policy.POLICYS.RULE]:
+            if p == policy.POLICYS.DATA_DRIVEN and (not self.enable_data_driven or not policy.estimator.workable()):
                 continue
 
-            if p == POLICYS.RULE:
+            if p == policy.POLICYS.RULE:
                 if self.rule_update(group) == 1:
                     print("Err: toplev_update Fail")
                 break

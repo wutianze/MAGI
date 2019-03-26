@@ -21,19 +21,20 @@ def addProcs(subsystem,path_to_cgroup,pid):
 def startProcs(subprocess,path_to_cgroup,cmd):
     if subprocess.getstatusoutput("cgexec -g " + subsystems + ":" + path_to_cgroup + cmd) == 1:
         print("Err: Start Process in cgroup Fail")
-#def quotaSet(name,quota):
-    '''
-    t = trees.Tree()
-    app = t.get_node_by_path('/cpu/'+str(name)+'/')
-    if app is None:
-        print('Err: Wrong Path:','/cpu/'+str(name)+'/')
-        return
-    app.controller.cfs_quota_us = int(quota)
-'''
+def cpu_quotaSet(name,quota):
+    if subprocess.getstatusoutput("cgset -r cpu.cfs_quota_us=" + str(quota) + " name") == 1:
+        print("Err: quotaSet Fail")
+
+def cfs_periodSet(name,period):
+    if subprocess.getstatusoutput("cgset -r cpu.cfs_period_us=" + str(period) + " name") == 1:
+        print("Err: cpu_periodSet Fail")
+
     
 def cpusSet(value,path_to_cgroup):
     if subprocess.getstatusoutput("cgset -r cpuset.cpus=" + str(value) + path_to_cgroup) == 1:
         print("Err:set cpus Fail")
+
+
 if __name__ == '__main__':
     #addProcs(input("pid:"),input("path"))
     #createCgroup(input('subsystem:'),input('name:'))
