@@ -1,9 +1,5 @@
 import subprocess
 import cgroup
-# Sets all COS to default (fill into all ways) and associates all cores with COS 0
-def resetCAT():
-    if subprocess.getstatusoutput('pqos -R') == 1:
-        print('err')
 
 def getCpuInfo(pid):
     return subprocess.getoutput('sudo pqos -I -p all:'+str(pid)]) 
@@ -35,6 +31,33 @@ def getCgroupsMbw(groups):
 
     return gP
 
-    	
-getCpuInfo(6)
+def getCgroupsLlc(groups):
+    gP = {}
+    pidsForJoin = []
+    for group in groups:
+        pids = cgroup.getCgroupPids(group)
+        gP[group] = len(pids)
+        pidsForJoin += pids
+
+    forHandle = subprocess.getoutput('pqos -I -p llc:' + str(','.join(pidsForJoin))).strip().split('\n')
+    lineI = 1 #start from second line
+    for group in groups:
+        tmpSum = 0.0
+        for i in range(int(gP[group])):
+            values = forHandle[lineI].split(' ')
+            tmpSum += float(values[?])
+        gP[group] = tmpSum
+
+    return gP
+def findGroupConsumeMostLlc(groups):
+    data = getCgroupsLlc(groups)
+    res = ""
+    mostL = 0.0
+    for key in data.keys():
+        if data[key] > mostL:
+            mostL = data[key]
+            res = key
+    return res
+if __name__ == '__main__':
+    pass
     
