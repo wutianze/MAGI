@@ -13,10 +13,11 @@ RULEMPKIBOUND = 5
 RULEMEMBWBOUND = 35
 
 class CpuController:
-    def __init__(self,configFile,sampleFile,cosFile):
+    def __init__(self,configFile,sampleFile,cosFile,en_data,en_train):
         #self.logging.basicConfig('logger.log',logging.INFO)
         #self.logger = logging.getLogger('example1')
-        self.enable_training = True
+        self.enable_data_driven = en_data
+        self.enable_training = en_train
         self.sleep_interval = 10
         self.ipc_policies = json.loads(open(configFile,'r').read())
         self.allGroups = list(map(str,open(sampleFile,'r').read().strip().split()))
@@ -77,7 +78,7 @@ class CpuController:
         return least_group
 
     def rule_update(self,group):
-        boundPart = rM.pmu.toDownGroup(group)
+        boundPart = rM.pmu.topDownGroup(group)
         curGI = self.currentInfo[group]
         if boundPart == "Backend_Bound":
             # memory-bound
@@ -86,19 +87,22 @@ class CpuController:
                 if float(rM.cat.getCgroupsMbw([group])[group])/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
                     if self.groupCOS[group] != 0:
-                        if rC.llcManager.moreLlc(self.groupCOS[group],2) == -1:# give 2 more cache
-                            rC.llcManager.lessLlc(self.groupCOS[rM.findGroupConsumeMostLlc(self.allGroups)],2)
+                        if rC.llcManager.moreLlc(self.groupCOS[group], 2) == -1:# give 2 more cache
+                            badGroup = rM.findGroupConsumeMostLlc(self.allGroups, group)
+                            if rC.llcManager.lessLlc(self.groupCOS[badGroup],2) == -1:
+                                rC.cfs_quotaCut(badGroup)
                 # mem-bw-bound
                 else:
-                    rC.
+                    rC.cfs_quotaCut(rM.findGroupConsumeMostMbw(self.allGroups,group),0.8)
             # core-bound
-            else:pass
+            else:
+                rC.cfs_quotaCut(rM.getCoGroup(group,self.allGroups),0.8)
         elif boundPart == "Frontend_Bound":
-            pass
+            rC.cfs_quotaCut(rM.getCoGroup(group, self.allGroups), 0.8)
 
         else:
-            pass
-            return 1
+            print("Err: Rule Model can do Nothing more")
+            return -1
         return 0
 
     def check_cpu(self,sample):

@@ -112,7 +112,7 @@ class llcManager:
             return -1
         else:
             old_num = self.cosLlcNum(cos)
-            old_llc = self.cosLlc(cos)
+            old_llc = self.cosLlc[cos]
             num = old_num + num
             if self.recycleCOS(cos) == -1:
                 return -1
