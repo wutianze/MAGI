@@ -5,7 +5,7 @@ def getCgroupPids(group):
     return subprocess.getoutput("cat /sys/fs/cgroup/"+str(group)+"/cgroup.procs").strip().split()
 
 def getCgroupMemConsume(group):
-
+    pass
 
 if __name__ == "__main__":
     print(getCgroupPids(input("group:")))

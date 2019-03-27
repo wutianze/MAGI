@@ -24,8 +24,6 @@ class llcManager:
         for i in range(TOTALLLC):
             if llcs >> i & 1 == 1:
                 res += 1
-        if res == TOTALLLC:# 0xfffff means the cos0 is not used
-            res = 0
         return res
 
     def findFreeLlc(self,num):
@@ -55,14 +53,10 @@ class llcManager:
             if llcs == -1:
                 print("Find free llc fail")
                 return -1
-            llclist = [str(hex(llcs))]
-            coslist = [cos]
-            if self.allocCache(coslist,llclist) == -1:
+            if self.allocCache([cos],[str(hex(llcs))]) == -1:
                 self.avaCOS.add(cos)
                 return -1
-            self.freeLlc = self.freeLlc ^ llcs
-            self.cosLlc[cos] = llcs
-            return 0
+            return cos
 
     def tryCombineFreeCOS0(self):
         cos0End = TOTALLLC - 1
@@ -81,18 +75,17 @@ class llcManager:
             newCOS0 = (self.freeLlc >> freeLeftEnd) << freeLeftEnd
             if self.allocCache([0],[str(hex(newCOS0))]) == -1:
                 return -1
-            self.cosLlc[0] = newCOS0
         return 0
 
     # recycleCOS should be invoked after the pid moved to another COS or it just finishes
     def recycleCOS(self,cos):# num can be all
-        coslist = [cos]
-        if self.allocCache(coslist, str(ALLLLC)) == -1:
-            return -1
+        #if self.allocCache(coslist, str(ALLLLC)) == -1:
+        #    return -1
         self.freeLlc = self.freeLlc | self.cosLlc[cos]
-        self.cosLlc[cos] = ALLLLC
+        #self.cosLlc[cos] = ALLLLC
         if self.tryCombineFreeCOS0() == -1:
             print("Warning:when combine freellc with COS0 Fail")  # not big problem
+        self.avaCOS.add(cos)
         return 0
 
     # cut the llc in cos by num
@@ -101,20 +94,16 @@ class llcManager:
             print("Err:No enough llc to cut in lessLlc")
             return -1
         else:
+            num = self.cosLlcNum(cos) - num
             if self.recycleCOS(cos) == -1:
                 return -1
-            num = self.cosLlcNum(cos) - num
             llcs = self.findFreeLlc(num)
             if llcs == -1:
                 print("Err:some other process may change COS")
                 return -1
-            llclist = [str(hex(llcs))]
-            coslist = [cos]
-            if self.allocCache(coslist, llclist) == -1:
+            if self.allocCache([cos], [str(hex(llcs))]) == -1:
                 print("Err:lessLlc when re-allocate cache fail")
                 return -1
-            self.freeLlc = self.freeLlc ^ llcs
-            self.cosLlc[cos] = llcs
             return 0
 
     def moreLlc(self,cos,num):
@@ -122,25 +111,20 @@ class llcManager:
             print("Err:No enough llc to cut in lessLlc")
             return -1
         else:
+            old_num = self.cosLlcNum(cos)
+            old_llc = self.cosLlc(cos)
+            num = old_num + num
             if self.recycleCOS(cos) == -1:
                 return -1
-            num = self.cosLlcNum(cos) - num
             llcs = self.findFreeLlc(num)
             if llcs == -1:
-                print("Err:some other process may change COS")
+                print("Err: No enough excessive cache")
+                self.allocCache([cos],[str(hex(old_llc))])
                 return -1
-            llclist = [str(hex(llcs))]
-            coslist = [cos]
-            if self.allocCache(coslist, llclist) == -1:
+            if self.allocCache([cos], [str(hex(llcs))]) == -1:
                 print("Err:lessLlc when re-allocate cache fail")
                 return -1
-            self.freeLlc = self.freeLlc ^ llcs
-            self.cosLlc[cos] = llcs
             return 0
-
-
-
-
 
     # Sets all COS to default (fill into all ways) and associates all cores with COS 0
     def resetCAT(self,numCOS):
@@ -163,6 +147,11 @@ class llcManager:
         if subprocess.getstatusoutput(cmd) == 1:
             print("Err: allocCache Fail")
             return -1
+        for cos,llc in zip(coses,llcs):
+            self.freeLlc = self.freeLlc ^ llc
+            self.cosLlc[cos] = llc
+            if llc & self.cosLlc[0] != 0 and cos != 0:  # get from COS0
+                self.cosLlc[0] = self.cosLlc[0] ^ llc
         return 0
 
     def assoProcessCOS(self,pidss,coses):

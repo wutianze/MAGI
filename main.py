@@ -4,6 +4,7 @@ import time
 
 import policy
 import resourceMonitor as rM
+import resourceControll as rC
 from enum import Enum
 
 sampleFile = 'samples.txt'
@@ -12,7 +13,7 @@ RULEMPKIBOUND = 5
 RULEMEMBWBOUND = 35
 
 class CpuController:
-    def __init__(self,configFile,sampleFile):
+    def __init__(self,configFile,sampleFile,cosFile):
         #self.logging.basicConfig('logger.log',logging.INFO)
         #self.logger = logging.getLogger('example1')
         self.enable_training = True
@@ -20,6 +21,8 @@ class CpuController:
         self.ipc_policies = json.loads(open(configFile,'r').read())
         self.allGroups = list(map(str,open(sampleFile,'r').read().strip().split()))
         self.currentInfo = {}
+        self.llcM = rC.cat.llcManager(4)
+        self.groupCOS = json.loads(open(cosFile,'r').read().strip().split())
     
     # try to add the groups who break SLA
     def try_to_add_sample(self):
@@ -80,16 +83,21 @@ class CpuController:
             # memory-bound
             if float(curGI["instructions"])/float(curGI["cycles"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
                 # llc-bound
-                if float(rM.cat.getMbw(rM.cgroup.getCgroupPids(group))/1024.0) < RULEMEMBWBOUND:
-                    #TODO relax llc of victim etc
-                    pass
+                if float(rM.cat.getCgroupsMbw([group])[group])/1024.0 < RULEMEMBWBOUND:
+                    # different from paper,need to find a better way
+                    if self.groupCOS[group] != 0:
+                        if rC.llcManager.moreLlc(self.groupCOS[group],2) == -1:# give 2 more cache
+                            rC.llcManager.lessLlc(self.groupCOS[rM.findGroupConsumeMostLlc(self.allGroups)],2)
                 # mem-bw-bound
-                else:pass
+                else:
+                    rC.
             # core-bound
             else:pass
         elif boundPart == "Frontend_Bound":
+            pass
 
         else:
+            pass
             return 1
         return 0
 
