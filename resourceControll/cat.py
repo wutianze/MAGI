@@ -11,12 +11,32 @@ class llcManager:
         self.avaCOS = set()
         for i in range(numCOS):
             self.avaCOS.add(i+1)
+
+    def cosLlcNum(self,cos):
+        llcs = 0x0
+        res = 0
+        if cos == -1:# count free num,COS0 has at least 2 cache
+            llcs = self.freeLlc
+            res -= 2
+        else:
+            llcs = self.cosLlc[cos]
+
+        for i in range(TOTALLLC):
+            if llcs >> i & 1 == 1:
+                res += 1
+        if res == TOTALLLC:# 0xfffff means the cos0 is not used
+            res = 0
+        return res
+
     def findFreeLlc(self,num):
+        if num > self.cosLlcNum(-1):
+            print("No enough free llc")
+            return -1
         llc = 0
         for i in range(num):
-            llc += 2^i
+            llc += 2 ^ i
         for i in range(TOTALLLC - 2):# because there are 2 caches for COS0
-            if (self.freeLlc >> i) | llc == llc:
+            if (self.freeLlc >> i) & llc == llc:
                 return llc << i
         print("No enough excessive free llc")#may do a clear up
         return -1 # mean wrong
@@ -44,17 +64,79 @@ class llcManager:
             self.cosLlc[cos] = llcs
             return 0
 
-    # recycleCOS should be invoked after the pid moved to another COS or it just finishes
-    # will recycle llc from left
-    def recycleCOS(self,cos,num):# num can be all
-        if str(num) == "all":
-            coslist = [cos]
-            if self.allocCache(coslist,str(ALLLLC)) == -1:
+    def tryCombineFreeCOS0(self):
+        cos0End = TOTALLLC - 1
+        while cos0End >= 0:
+            if self.cosLlc[0] >> cos0End & 1 != 1:
+                break
+            cos0End -= 1
+        cos0End += 1
+        freeLeftEnd = TOTALLLC - 1
+        while freeLeftEnd >= 0:
+            if self.freeLlc >> freeLeftEnd & 1 != 1:
+                break
+            freeLeftEnd -= 1
+        freeLeftEnd += 1
+        if freeLeftEnd < cos0End:  # mean can combine cache to cos0
+            newCOS0 = (self.freeLlc >> freeLeftEnd) << freeLeftEnd
+            if self.allocCache([0],[str(hex(newCOS0))]) == -1:
                 return -1
-            self.freeLlc = self.freeLlc | self.cosLlc[cos]
-            self.cosLlc[cos] = ALLLLC
-            toC = self.freeLlc ^ self.cosLlc[0]
+            self.cosLlc[0] = newCOS0
+        return 0
 
+    # recycleCOS should be invoked after the pid moved to another COS or it just finishes
+    def recycleCOS(self,cos):# num can be all
+        coslist = [cos]
+        if self.allocCache(coslist, str(ALLLLC)) == -1:
+            return -1
+        self.freeLlc = self.freeLlc | self.cosLlc[cos]
+        self.cosLlc[cos] = ALLLLC
+        if self.tryCombineFreeCOS0() == -1:
+            print("Warning:when combine freellc with COS0 Fail")  # not big problem
+        return 0
+
+    # cut the llc in cos by num
+    def lessLlc(self,cos,num):
+        if int(num) >= self.cosLlcNum(cos):
+            print("Err:No enough llc to cut in lessLlc")
+            return -1
+        else:
+            if self.recycleCOS(cos) == -1:
+                return -1
+            num = self.cosLlcNum(cos) - num
+            llcs = self.findFreeLlc(num)
+            if llcs == -1:
+                print("Err:some other process may change COS")
+                return -1
+            llclist = [str(hex(llcs))]
+            coslist = [cos]
+            if self.allocCache(coslist, llclist) == -1:
+                print("Err:lessLlc when re-allocate cache fail")
+                return -1
+            self.freeLlc = self.freeLlc ^ llcs
+            self.cosLlc[cos] = llcs
+            return 0
+
+    def moreLlc(self,cos,num):
+        if int(num) >= self.cosLlcNum(cos) + self.cosLlcNum(-1):
+            print("Err:No enough llc to cut in lessLlc")
+            return -1
+        else:
+            if self.recycleCOS(cos) == -1:
+                return -1
+            num = self.cosLlcNum(cos) - num
+            llcs = self.findFreeLlc(num)
+            if llcs == -1:
+                print("Err:some other process may change COS")
+                return -1
+            llclist = [str(hex(llcs))]
+            coslist = [cos]
+            if self.allocCache(coslist, llclist) == -1:
+                print("Err:lessLlc when re-allocate cache fail")
+                return -1
+            self.freeLlc = self.freeLlc ^ llcs
+            self.cosLlc[cos] = llcs
+            return 0
 
 
 
