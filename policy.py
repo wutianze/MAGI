@@ -1,49 +1,62 @@
 import estimator as es
-from enum import Enum
+import resourceControll as rC
 import resourceMonitor as rM
-class POLICYS(Enum):
-    DATA_DRIVEN = 0 
-    RULE = 1
 
-mainExTar = ["lock_loads","fp_uops","branch","l1_misses","l2_misses","stall_sb","branch_misp","machine_clear"]
-subTar = ["instructions","cycles","loads_and_stores","cache-misses"]
+RULEIPCBOUND = 1
+RULEMPKIBOUND = 5
+RULEMEMBWBOUND = 35
 
-# a Policy represent a group,it has two models,one is data-driven network the other is rule. It will record what type of data the model need to collect
 class Policy:
-    def __init__(self,name,groups,control_config):
-        self.name = name
+    def __init__(self,group,groups,control_config,accuracy):
+        self.own = group
         self.controlConfig = control_config
-        self.estimator = es.Estimator()
-        self.configs = []
+        self.estimator = es.Estimator(accuracy)
         self.groups = groups
-        for group in groups:
-            for event in subTar:
-                add_event(event,group)
-            if group == self.name:
-                for event in mainExTar:
-                    add_event(event,group)
-
-    def add_event(self, event_name, group): 
-        if event_name in toEvent.keys(): 
-            event_name = toEvent[event_name] 
-        self.configs.append((event_name, group)) 
+        self.currentInfo = {}
     
     def generate_one_train_data(self,infoList):
         mainD = []
         otherD = []
         for (group,event_name,lineCon) in infoList:
             if group == self.name:
+                pass
 
-        
+
 
     def select_throttle_target(self,group):
         pass
 
-    def test(self):
-        if self.estimator.workable() == True:
-            print(self.estimator.t)
+
+    # RULE Model
+    def rule_update(self):
+        boundPart = rM.pmu.topDownGroup(self.own)
+        curGI = self.currentInfo[self.own]
+        if boundPart == "Backend_Bound":
+            # memory-bound
+            if float(curGI["instructions"])/float(curGI["cycles"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
+                # llc-bound
+                if float(rM.cat.getCgroupsMbw([self.own])[self.own])/1024.0 < RULEMEMBWBOUND:
+                    # different from paper,need to find a better way
+                    if self.groupCOS[self.own] != 0:
+                        if rC.llcManager.moreLlc(self.groupCOS[self.own], 2) == -1:# give 2 more cache
+                            badGroup = rM.findGroupConsumeMostLlc(self.groups, self.own)
+                            if rC.llcManager.lessLlc(self.groupCOS[badGroup],2) == -1:
+                                rC.cfs_quotaCut(badGroup)
+                # mem-bw-bound
+                else:
+                    rC.cfs_quotaCut(rM.findGroupConsumeMostMbw(self.groups,self.own),0.8)
+            # core-bound
+            else:
+                rC.cfs_quotaCut(rM.getCoGroup(self.own,self.groups),0.8)
+        elif boundPart == "Frontend_Bound":
+            rC.cfs_quotaCut(rM.getCoGroup(self.own, self.groups), 0.8)
+
+        else:
+            print("Err: Rule Model can do Nothing more")
+            return -1
+        return 0
 
 if __name__ == '__main__':
-    p = Policy("f")
-    p.estimator.t = False
-    p.test()
+    pass
+
+

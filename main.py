@@ -1,30 +1,30 @@
 import json
 #import logging
 import time
-
-import policy
+import policy as po
 import resourceMonitor as rM
 import resourceControll as rC
-from enum import Enum
-
-sampleFile = 'samples.txt'
-RULEIPCBOUND = 1
-RULEMPKIBOUND = 5
-RULEMEMBWBOUND = 35
 
 class CpuController:
-    def __init__(self,configFile,sampleFile,cosFile,en_data,en_train):
+    def __init__(self,configFile,sampleFile,cosFile,en_data,en_train, en_detect, accuracy):
         #self.logging.basicConfig('logger.log',logging.INFO)
         #self.logger = logging.getLogger('example1')
         self.enable_data_driven = en_data
         self.enable_training = en_train
+        self.enable_detecting = en_detect
         self.sleep_interval = 10
-        self.ipc_policies = json.loads(open(configFile,'r').read())
-        self.allGroups = list(map(str,open(sampleFile,'r').read().strip().split()))
+        self.allGroups = list(map(str, open(sampleFile, 'r').read().strip().split()))
+
+        controll_config = json.loads(open(configFile,'r').read())
+        self.policies = {}
+        for g in controll_config.keys():
+            self.policies[g] = po.Policy(g, self.allGroups, controll_config[g], accuracy)
+
         self.currentInfo = {}
         self.llcM = rC.cat.llcManager(4)
         self.groupCOS = json.loads(open(cosFile,'r').read().strip().split())
-    
+
+
     # try to add the groups who break SLA
     def try_to_add_sample(self):
         self.currentInfo = rM.perf.getAllInfo(self.allGroups)
@@ -35,6 +35,7 @@ class CpuController:
                 samples.append(group)
         #TODO:sava the currentInfo for future use
         return samples
+
 
     def run(self):
         if self.enable_training:
@@ -49,6 +50,7 @@ class CpuController:
 
             if self.enable_detecting:
                 self.check_cpu(sample)
+
 
 # select the least-ipc group in sample
     def select_low_ipc_group(self,sample):
@@ -77,6 +79,7 @@ class CpuController:
                 least_group = group
         return least_group
 
+    # RULE Model
     def rule_update(self,group):
         boundPart = rM.pmu.topDownGroup(group)
         curGI = self.currentInfo[group]
@@ -105,6 +108,7 @@ class CpuController:
             return -1
         return 0
 
+
     def check_cpu(self,sample):
         group = self.select_low_ipc_group(sample) #sample is a list filled with groups needed to be watched
 
@@ -113,30 +117,30 @@ class CpuController:
         elif self.have_cpu_throttled_group():
             self.start_cpu_relax_analyst(sample)
 
+
     def start_cpu_throttle_analyst(self,group,sample):
-        policy = self.ipc_policies[group]
-
-        for p in [policy.POLICYS.DATA_DRIVEN, policy.POLICYS.RULE]:
-            if p == policy.POLICYS.DATA_DRIVEN and (not self.enable_data_driven or not policy.estimator.workable()):
-                continue
-
-            if p == policy.POLICYS.RULE:
-                if self.rule_update(group) == 1:
-                    print("Err: toplev_update Fail")
-                break
-
+        policy = self.policies[group]
+        if self.enable_data_driven and policy.estimator.workable():
             targets = policy.select_throttle_target(sample)
-
             if len(targets) == 0:
-                self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
-                continue
+                # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
+                print("Have no targets")
             else:
-                self.logger.info("using policy %s to make decision",policy.name)
+                # self.logger.info("using policy %s to make decision",policy.name)
                 self.set_throttle_setup(targets)
-                break
+        else:
+            if policy.rule_update(group) == 1:
+                print("Err: toplev_update Fail")
+                return -1
+        return 0
+
+
+
+
+
+
+
+
 if __name__ == '__main__':
-	configFileName = input("enter the config file path:")
-	configFile = open(configFileName,"r")
-	configContent = json.loads(configFile.read())
-	print(configContent["/apasra/tubo"]["SLA"])
+    pass
 
