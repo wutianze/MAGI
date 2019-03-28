@@ -79,6 +79,8 @@ class CpuController:
                 least_group = group
         return least_group
 
+
+    '''
     # RULE Model
     def rule_update(self,group):
         boundPart = rM.pmu.topDownGroup(group)
@@ -107,7 +109,7 @@ class CpuController:
             print("Err: Rule Model can do Nothing more")
             return -1
         return 0
-
+        '''
 
     def check_cpu(self,sample):
         group = self.select_low_ipc_group(sample) #sample is a list filled with groups needed to be watched
