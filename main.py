@@ -6,7 +6,7 @@ import resourceMonitor as rM
 import resourceControll as rC
 
 class CpuController:
-    def __init__(self,configFile,sampleFile,cosFile,en_data,en_train, en_detect, accuracy):
+    def __init__(self,configFile,sampleFile, en_data,en_train, en_detect, accuracy):
         #self.logging.basicConfig('logger.log',logging.INFO)
         #self.logger = logging.getLogger('example1')
         self.enable_data_driven = en_data
@@ -22,7 +22,7 @@ class CpuController:
 
         self.currentInfo = {}
         self.llcM = rC.cat.llcManager(4)
-        self.groupCOS = json.loads(open(cosFile,'r').read().strip().split())
+        self.groupCOS = {}
 
 
     # try to add the groups who break SLA
@@ -120,18 +120,18 @@ class CpuController:
             self.start_cpu_relax_analyst(sample)
 
 
-    def start_cpu_throttle_analyst(self,group,sample):
+    def start_cpu_throttle_analyst(self, group, sample):
         policy = self.policies[group]
         if self.enable_data_driven and policy.estimator.workable():
-            targets = policy.select_throttle_target(sample)
+            targets = policy.throttle_target_select_setup(sample)
             if len(targets) == 0:
                 # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
                 print("Have no targets")
             else:
                 # self.logger.info("using policy %s to make decision",policy.name)
-                self.set_throttle_setup(targets)
+                policy.set_throttle_setup(targets)
         else:
-            if policy.rule_update(group) == 1:
+            if policy.rule_update(self.groupCOS) == -1:
                 print("Err: toplev_update Fail")
                 return -1
         return 0

@@ -1,10 +1,17 @@
 import estimator as es
 import resourceControll as rC
 import resourceMonitor as rM
+import numpy as np
+import math
+
+TRAINCIRCLE = 100
 
 RULEIPCBOUND = 1
 RULEMPKIBOUND = 5
 RULEMEMBWBOUND = 35
+mainExTar = ["lock_loads","fp_uops","branch","l1_misses","l2_misses","stall_sb","branch_misp","machine_clear"]
+subTar = ["instructions","cycles","loads_and_stores","cache-misses"]
+
 
 class Policy:
     def __init__(self,group,groups,control_config,accuracy):
@@ -13,22 +20,110 @@ class Policy:
         self.estimator = es.Estimator(accuracy)
         self.groups = groups
         self.currentInfo = {}
-    
-    def generate_one_train_data(self,infoList):
-        mainD = []
-        otherD = []
-        for (group,event_name,lineCon) in infoList:
-            if group == self.name:
-                pass
+        self.roundHistoryX = []
+        self.roundHistoryy = []
+        self.historyX = []
+        self.historyy = []
+
+        self.count = 0
+
+    def with_run(self, infoList, train_enable):
+        self.currentInfo = infoList
+        X, y = self.generate_one_train_data(infoList)
+        self.roundHistoryX.append(X)
+        self.roundHistoryy.append(y)
+        self.count += 1
+        if self.count == TRAINCIRCLE:
+            if self.count == 0:
+                self.estimator.scaler_init(self.roundHistoryX)
+            train_X, train_y = self.estimator.pre_data(self.roundHistoryX, self.roundHistoryy)
+            self.historyX += train_X
+            self.historyy += train_y
+            self.roundHistoryX.clear()
+            self.roundHistoryy.clear()# can store to local disk for future use
+            self.count = 1
+            if train_enable:
+                self.estimator.train(train_X, train_y)
+
+    def generate_one_train_data(self, infoList):
+        train_X = []
+        for tar in subTar:
+            train_X.append(infoList[self.own][tar])
+        for tar in mainExTar:
+            train_X.append(infoList[self.own][tar])
+        for g in self.groups:
+            if g != self.own:
+                for tar in subTar:
+                    train_X.append(infoList[g][tar])
+        train_y = float(train_X[self.own]["instructions"])/float(train_X[self.own]["cycles"])
+        return train_X, train_y
+
+
+    def train_store(self):
+        pass
+
+    def diff_index(self, x1, x2):
+        dist = np.linalg.norm(np.array(x1 - x2))
+
+        sepDiff = []
+        main1 = []
+        main2 = []
+        mainNum = len(subTar)+len(mainExTar)
+        for i in range(mainNum):
+            main1.append(x1[i])
+            main2.append(x2[i])
+        sepDiff.append(np.linalg.norm(np.array(main1) - np.array(main2)))
+        for i in range(len(self.groups) - 1):
+            sub1 = []
+            sub2 = []
+            for j in range(len(subTar)):
+                sub1.append(x1[mainNum + j])
+                sub2.append(x2[mainNum + j])
+            sepDiff.append(np.linalg.norm(np.array(sub1) - np.array(sub2)))
+            mainNum += len(subTar)
+        diffSum = np.sum(np.array(sepDiff))
+        std_entropy = 0.0
+        for d in sepDiff:# H = - ∑  Pi * log2 Pi
+            p = float(d)/float(diffSum)
+            std_entropy -= math.log(p,2) * p
+        return dist * (1.0 + std_entropy)
+
+
+    def find_basic_x(self, curr_x):
+        small_set = self.estimator.find_sv_statisfy_v(self.historyX, self.historyy, float(self.controlConfig["SLA"]))
+        basic_x = None
+        least_diff = 9999999.9
+        for x in small_set:
+            tmp_diff = self.diff_index(curr_x, x)
+            if tmp_diff < least_diff:
+                least_diff = tmp_diff
+                basic_x = x
+        return basic_x
 
 
 
-    def select_throttle_target(self,group):
+    def select_throttle_target(self,sample):
         pass
 
 
+
+    def set_throttle_target(self, targets):
+        pass
+
+
+    def throttle_target_select_setup(self,sample):
+        targets = self.select_throttle_target(sample)
+        if len(targets) == 0:
+            # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
+            print("Have no targets")
+            return -1
+        else:
+            # self.logger.info("using policy %s to make decision",policy.name)
+            self.set_throttle_setup(targets)
+
+
     # RULE Model
-    def rule_update(self):
+    def rule_update(self, groupCOS):
         boundPart = rM.pmu.topDownGroup(self.own)
         curGI = self.currentInfo[self.own]
         if boundPart == "Backend_Bound":
@@ -37,10 +132,10 @@ class Policy:
                 # llc-bound
                 if float(rM.cat.getCgroupsMbw([self.own])[self.own])/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
-                    if self.groupCOS[self.own] != 0:
-                        if rC.llcManager.moreLlc(self.groupCOS[self.own], 2) == -1:# give 2 more cache
+                    if groupCOS[self.own] != 0:
+                        if rC.llcManager.moreLlc(groupCOS[self.own], 2) == -1:# give 2 more cache
                             badGroup = rM.findGroupConsumeMostLlc(self.groups, self.own)
-                            if rC.llcManager.lessLlc(self.groupCOS[badGroup],2) == -1:
+                            if rC.llcManager.lessLlc(groupCOS[badGroup],2) == -1:
                                 rC.cfs_quotaCut(badGroup)
                 # mem-bw-bound
                 else:
