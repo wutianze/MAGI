@@ -123,13 +123,7 @@ class CpuController:
     def start_cpu_throttle_analyst(self, group, sample):
         policy = self.policies[group]
         if self.enable_data_driven and policy.estimator.workable():
-            targets = policy.throttle_target_select_setup(sample)
-            if len(targets) == 0:
-                # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
-                print("Have no targets")
-            else:
-                # self.logger.info("using policy %s to make decision",policy.name)
-                policy.set_throttle_setup(targets)
+            policy.throttle_target_select_setup(self.groupCOS)
         else:
             if policy.rule_update(self.groupCOS) == -1:
                 print("Err: toplev_update Fail")

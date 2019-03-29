@@ -5,7 +5,7 @@ import numpy as np
 
 class Estimator:
     def __init__(self,accuracy, eps = 0.3, min_samples = 10):
-        self.scaler = preprocessing.Normalizer()
+        self.scaler = None
         self.nn = neural_network.MLPRegressor()
         self.svm = svm.SVC(kernel='linear')
         self.accuracy_demand = accuracy
@@ -43,6 +43,7 @@ class Estimator:
         return False
 
     def scaler_init(self, X):
+        self.scaler = preprocessing.Normalizer()
         self.scaler.fit(X)
 
 
@@ -68,7 +69,7 @@ class Estimator:
 
 
     def inference(self, X):
-        return self.nn.predict(X)
+        return float(self.nn.predict(X))
 
 
 if __name__ == '__main__':
