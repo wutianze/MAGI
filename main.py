@@ -24,6 +24,8 @@ class CpuController:
         self.llcM = rC.cat.llcManager(4)
         self.groupCOS = {}
 
+        self.throttled_group = []
+
 
     # try to add the groups who break SLA
     def try_to_add_sample(self):
@@ -38,8 +40,6 @@ class CpuController:
 
 
     def run(self):
-        if self.enable_training:
-            self.try_to_train_model()
 
         while True:
             if self.sleep_interval > 0:
@@ -47,7 +47,8 @@ class CpuController:
             
             # try_to_add_sample will also collect the current info of all the groups
             sample = self.try_to_add_sample()
-
+            for g in self.policies.keys():
+                self.policies[g].with_run(self.currentInfo,self.enable_training)
             if self.enable_detecting:
                 self.check_cpu(sample)
 
@@ -80,52 +81,28 @@ class CpuController:
         return least_group
 
 
-    '''
-    # RULE Model
-    def rule_update(self,group):
-        boundPart = rM.pmu.topDownGroup(group)
-        curGI = self.currentInfo[group]
-        if boundPart == "Backend_Bound":
-            # memory-bound
-            if float(curGI["instructions"])/float(curGI["cycles"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
-                # llc-bound
-                if float(rM.cat.getCgroupsMbw([group])[group])/1024.0 < RULEMEMBWBOUND:
-                    # different from paper,need to find a better way
-                    if self.groupCOS[group] != 0:
-                        if rC.llcManager.moreLlc(self.groupCOS[group], 2) == -1:# give 2 more cache
-                            badGroup = rM.findGroupConsumeMostLlc(self.allGroups, group)
-                            if rC.llcManager.lessLlc(self.groupCOS[badGroup],2) == -1:
-                                rC.cfs_quotaCut(badGroup)
-                # mem-bw-bound
-                else:
-                    rC.cfs_quotaCut(rM.findGroupConsumeMostMbw(self.allGroups,group),0.8)
-            # core-bound
-            else:
-                rC.cfs_quotaCut(rM.getCoGroup(group,self.allGroups),0.8)
-        elif boundPart == "Frontend_Bound":
-            rC.cfs_quotaCut(rM.getCoGroup(group, self.allGroups), 0.8)
-
-        else:
-            print("Err: Rule Model can do Nothing more")
-            return -1
-        return 0
-        '''
-
     def check_cpu(self,sample):
         group = self.select_low_ipc_group(sample) #sample is a list filled with groups needed to be watched
 
         if group is not None:
-            self.start_cpu_throttle_analyst(group,sample)
-        elif self.have_cpu_throttled_group():
-            self.start_cpu_relax_analyst(sample)
+            self.start_cpu_throttle_analyst(group)
+        elif len(self.throttled_group) != 0:
+            self.start_cpu_relax_analyst()
 
 
-    def start_cpu_throttle_analyst(self, group, sample):
+    def start_cpu_relax_analyst(self):
+        for t in self.throttled_group:
+            if self.llcM.moreLlc(self.groupCOS[t], 2) == -1:
+                if rC.cfs_quotaCut(t, 1.25) == -1:
+                    return -1
+
+
+    def start_cpu_throttle_analyst(self, group):
         policy = self.policies[group]
         if self.enable_data_driven and policy.estimator.workable():
-            policy.throttle_target_select_setup(self.groupCOS)
+            policy.throttle_target_select_setup(self.groupCOS, self.throttled_group, self.llcM)
         else:
-            if policy.rule_update(self.groupCOS) == -1:
+            if policy.rule_update(self.groupCOS, self.throttled_group, self.llcM) == -1:
                 print("Err: toplev_update Fail")
                 return -1
         return 0

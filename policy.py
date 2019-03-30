@@ -123,7 +123,7 @@ class Policy:
         return target
 
 
-    def set_throttle_setup(self, target, groupCOS):
+    def set_throttle_setup(self, target, groupCOS, throttled_group, llcM):
         curGI = self.currentInfo[self.own]
         # memory-bound
         if float(curGI["instructions"]) / float(curGI["cycles"]) < RULEIPCBOUND and float(
@@ -131,18 +131,22 @@ class Policy:
             # llc-bound
             if float(rM.cat.getCgroupsMbw([self.own])[self.own]) / 1024.0 < RULEMEMBWBOUND:
                 if groupCOS[self.own] != 0:
-                    if rC.llcManager.moreLlc(groupCOS[self.own], 2) == -1:  # give 2 more cache
-                        if rC.llcManager.lessLlc(groupCOS[target], 2) == -1:
-                            rC.cfs_quotaCut(target)
+                    if llcM.moreLlc(groupCOS[self.own], 2) == -1:  # give 2 more cache
+                        if llcM.lessLlc(groupCOS[target], 2) == -1:
+                            if rC.cfs_quotaCut(target) == -1:
+                                return -1
             # mem-bw-bound
             else:
-                rC.cfs_quotaCut(target, 0.8)
+                if rC.cfs_quotaCut(target, 0.8) == -1:
+                    return -1
         # core-bound
         else:
-            rC.cfs_quotaCut(target, 0.8)
+            if rC.cfs_quotaCut(target, 0.8) == -1:
+                return -1
+        throttled_group.append(target)
 
 
-    def throttle_target_select_setup(self, groupCOS):
+    def throttle_target_select_setup(self, groupCOS, throttled_group, llcM):
         target = self.select_throttle_target()
         if target == "":
             # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
@@ -150,13 +154,15 @@ class Policy:
             return -1
         else:
             # self.logger.info("using policy %s to make decision",policy.name)
-            self.set_throttle_setup(target, groupCOS)
+            self.set_throttle_setup(target, groupCOS, throttled_group, llcM)
+            return 0
 
 
     # RULE Model
-    def rule_update(self, groupCOS):
+    def rule_update(self, groupCOS, throttled_group, llcM):
         boundPart = rM.pmu.topDownGroup(self.own)
         curGI = self.currentInfo[self.own]
+        badGroup = ""
         if boundPart == "Backend_Bound":
             # memory-bound
             if float(curGI["instructions"])/float(curGI["cycles"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
@@ -164,22 +170,30 @@ class Policy:
                 if float(rM.cat.getCgroupsMbw([self.own])[self.own])/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
                     if groupCOS[self.own] != 0:
-                        if rC.llcManager.moreLlc(groupCOS[self.own], 2) == -1:# give 2 more cache
+                        if llcM.moreLlc(groupCOS[self.own], 2) == -1:# give 2 more cache
                             badGroup = rM.findGroupConsumeMostLlc(self.groups, self.own)
-                            if rC.llcManager.lessLlc(groupCOS[badGroup],2) == -1:
-                                rC.cfs_quotaCut(badGroup)
+                            if llcM.lessLlc(groupCOS[badGroup],2) == -1:
+                                if rC.cfs_quotaCut(badGroup) == -1:
+                                    return -1
                 # mem-bw-bound
                 else:
-                    rC.cfs_quotaCut(rM.findGroupConsumeMostMbw(self.groups,self.own),0.8)
+                    badGroup = rM.findGroupConsumeMostMbw(self.groups,self.own)
+                    if rC.cfs_quotaCut(badGroup,0.8) == -1:
+                        return -1
             # core-bound
             else:
-                rC.cfs_quotaCut(rM.getCoGroup(self.own,self.groups),0.8)
+                badGroup = rM.getCoGroup(self.own,self.groups)
+                if rC.cfs_quotaCut(badGroup,0.8) == -1:
+                    return -1
         elif boundPart == "Frontend_Bound":
-            rC.cfs_quotaCut(rM.getCoGroup(self.own, self.groups), 0.8)
+            badGroup = rM.getCoGroup(self.own, self.groups)
+            if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                return -1
 
         else:
             print("Err: Rule Model can do Nothing more")
             return -1
+        throttled_group.append(badGroup)
         return 0
 
 if __name__ == '__main__':
