@@ -50,7 +50,7 @@ def getInfoList(configs,time):
     #return subprocess.getoutput(cmd_str).strip().split()
     '''
 
-def getAllInfo(groups):
+def getAllInfo(groups, sample_len):
     print("getAllInfo start")
     cmd_str = perfPath + " stat -a -x'|'"
     for group in groups:
@@ -60,7 +60,7 @@ def getAllInfo(groups):
         cmd_str = cmd_str[0:(len(cmd_str)-1)]#delete the last ','
         cmd_str += " -G " + group
     print(cmd_str)
-    forHandle = subprocess.getoutput(cmd_str + " sleep 2").strip().split('\n')
+    forHandle = subprocess.getoutput(cmd_str + " sleep " + str(sample_len)).strip().split('\n')
     print(forHandle)
     res = {}
     index = 0

@@ -1,19 +1,21 @@
 import json
 #import logging
+import argparse
 import time
 import policy as po
 import resourceMonitor as rM
 import resourceControll as rC
 
 class CpuController:
-    def __init__(self,configFile,sampleFile, en_data,en_train, en_detect, accuracy):
+    def __init__(self, configFile, samples, en_data, en_train, en_detect, accuracy, sleep_interval, sample_len):
         #self.logging.basicConfig('logger.log',logging.INFO)
         #self.logger = logging.getLogger('example1')
         self.enable_data_driven = en_data
         self.enable_training = en_train
         self.enable_detecting = en_detect
-        self.sleep_interval = 10
-        self.allGroups = list(map(str, open(sampleFile, 'r').read().strip().split()))
+        self.sleep_interval = sleep_interval
+        self.allGroups = samples
+        self.sample_len = sample_len
 
         controll_config = json.loads(open(configFile,'r').read())
         self.policies = {}
@@ -29,11 +31,11 @@ class CpuController:
 
     # try to add the groups who break SLA
     def try_to_add_sample(self):
-        self.currentInfo = rM.perf.getAllInfo(self.allGroups)
+        self.currentInfo = rM.perf.getAllInfo(self.allGroups, self.sample_len)
         samples = []
         for group in self.currentInfo.keys():
             # now the sla depends on ipc=instructions/cycles
-            if float(self.currentInfo[group]["instructions"])/float(self.currentInfo[group]["cycles"]) < float(self.ipc_policies[group]["SLA"]["ipc"]):
+            if float(self.currentInfo[group]["instructions"])/float(self.currentInfo[group]["cycles"]) < float(self.policies[group].controlConfig["SLA"]["ipc"]):
                 samples.append(group)
         #TODO:sava the currentInfo for future use
         return samples
@@ -48,7 +50,7 @@ class CpuController:
             # try_to_add_sample will also collect the current info of all the groups
             sample = self.try_to_add_sample()
             for g in self.policies.keys():
-                self.policies[g].with_run(self.currentInfo,self.enable_training)
+                self.policies[g].with_run(self.currentInfo, self.enable_training)
             if self.enable_detecting:
                 self.check_cpu(sample)
 
@@ -107,13 +109,21 @@ class CpuController:
                 return -1
         return 0
 
-
-
-
-
-
-
-
 if __name__ == '__main__':
-    pass
+    parser = argparse.ArgumentParser(description='help manual')
+    parser.add_argument('--config', type=str, default="./config.json")
+    parser.add_argument('--enable-detecting')
+    parser.add_argument('--enable-training')
+    parser.add_argument('--enable-data-driven')
+    parser.add_argument('--samples', type=str, default="", help="the groups needed to control")
+    parser.add_argument('--accuracy', type=float, default=0.7, help="the threshold of model's accuracy")
+    parser.add_argument('--sample-length', type=int, default=3, help="how many seconds the sampling measurement should cover")
+    parser.add_argument('--sleep', type=int, default=4, help="pause sleep seconds between each round")
+    args = parser.parse_args()
+    en_data = args.enable_data_driven != None
+    en_det = args.enable_detecting != None
+    en_tra = args.enable_training != None
+    samples = args.samples.strip().split(',')
+    c = CpuController(args.config, samples, en_data, en_tra, en_det, args.accuracy, args.sleep, args.sample_length)
+    c.run()
 

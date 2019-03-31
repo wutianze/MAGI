@@ -59,7 +59,7 @@ class Policy:
 
 
     def train_store(self):
-        pass
+        self.estimator.store_model()
 
 
     def diff_index(self, x1, x2):
