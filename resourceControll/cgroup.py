@@ -20,7 +20,7 @@ def addProcs(subsystem,path_to_cgroup,pid):
         print("Err: Add Process Fail")
 
 def startProcs(subsystems,path_to_cgroup,cmd):
-    if subprocess.getstatusoutput("cgexec -g " + subsystems + ":" + path_to_cgroup + cmd) == 1:
+    if subprocess.getstatusoutput("cgexec -g " + subsystems + ":/" + path_to_cgroup + " " + cmd) == 1:
         print("Err: Start Process in cgroup Fail")
 
 

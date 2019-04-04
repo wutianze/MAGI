@@ -124,6 +124,9 @@ if __name__ == '__main__':
     en_det = args.enable_detecting != None
     en_tra = args.enable_training != None
     samples = args.samples.strip().split(',')
+
+    for s in samples:
+        rC.startProcs("cpu,perf_event", s, "sudo ./run_" + s)
     c = CpuController(args.config, samples, en_data, en_tra, en_det, args.accuracy, args.sleep, args.sample_length)
     c.run()
 
