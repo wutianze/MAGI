@@ -1,4 +1,6 @@
 #from cgroupspy import trees
+import sys
+sys.path.append("..")
 import subprocess
 import resourceMonitor as rM
 
@@ -8,8 +10,8 @@ def createCgroup(subsystem,name):
     if sS.create_cgroup(name) is None:
         print('Err: Wrong Path:',str(subsystem)+str(name)+'/')
         '''
-    if subprocess.getstatusoutput("cgcreate -g " + subsystem + ":" + "name") == 1:
-        print("Err: create cgroup")
+    if subprocess.getstatusoutput("cgcreate -g " + subsystem + ":" + name)[0] != 0:
+       print("Err: create cgroup")
 
 def addProcs(subsystem,path_to_cgroup,pid):
     '''
@@ -49,7 +51,7 @@ def cfs_quotaCut(group,percent):
 
 if __name__ == '__main__':
     #addProcs(input("pid:"),input("path"))
-    #createCgroup(input('subsystem:'),input('name:'))
+    createCgroup(input('subsystem:'),input('name:'))
     #quotaSet(input("appName:"),input(" quota value:"))
     addProcs(input("subsystem:"),input("path_to_group:"),input("pid:"))
-    cpusSet(input("cpus:"),input("path_to_group:"))
+    #cpusSet(input("cpus:"),input("path_to_group:"))
