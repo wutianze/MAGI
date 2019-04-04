@@ -1,4 +1,6 @@
 import subprocess
+import sys
+sys.path.append("..")
 import resourceMonitor as rM
 
 def getCpuInfo(pid):
