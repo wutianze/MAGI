@@ -4,7 +4,7 @@ sys.path.append("..")
 import resourceMonitor as rM
 
 def getCpuInfo(pid):
-    return subprocess.getoutput('sudo pqos -I -p all:'+str(pid))
+    return subprocess.getoutput('pqos -t1 -I -p all:'+str(pid))
 
 
 def getIpc(pid):
@@ -13,7 +13,7 @@ def getIpc(pid):
 
 # get mem-bw of a single process
 def getPidMbw(pid):
-    forHandle = subprocess.getoutput('pqos -I -p mbl:' + str(pid)).strip()
+    forHandle = subprocess.getoutput('pqos -t1 -I -p mbl:' + str(pid)).strip()
     return 2.2
 
 
@@ -25,7 +25,7 @@ def getCgroupsMbw(groups):
         gP[group] = len(pids)
         pidsForJoin += pids
 
-    forHandle = subprocess.getoutput('pqos -I -p mbl:' + str(','.join(pidsForJoin))).strip().split('\n')
+    forHandle = subprocess.getoutput('pqos -t1 -I -p mbl:' + str(','.join(pidsForJoin))).strip().split('\n')
     lineI = 1 #start from second line
     for group in groups:
         tmpSum = 0.0
@@ -45,7 +45,7 @@ def getCgroupsLlc(groups):
         gP[group] = len(pids)
         pidsForJoin += pids
 
-    forHandle = subprocess.getoutput('pqos -I -p llc:' + str(','.join(pidsForJoin))).strip().split('\n')
+    forHandle = subprocess.getoutput('pqos -t1 -I -p llc:' + str(','.join(pidsForJoin))).strip().split('\n')
     print(forHandle)
     lineI = 1 #start from second line
     for group in groups:
