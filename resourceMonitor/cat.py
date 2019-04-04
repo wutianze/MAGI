@@ -1,5 +1,5 @@
 import subprocess
-import resourceMonitor.cgroup
+import resourceMonitor as rM
 
 def getCpuInfo(pid):
     return subprocess.getoutput('sudo pqos -I -p all:'+str(pid))
@@ -19,7 +19,7 @@ def getCgroupsMbw(groups):
     gP = {}
     pidsForJoin = []
     for group in groups:
-        pids = resourceMonitor.cgroup.getCgroupPids(group)
+        pids = rM.cgroup.get_group_pids(group)
         gP[group] = len(pids)
         pidsForJoin += pids
 
@@ -39,7 +39,7 @@ def getCgroupsLlc(groups):
     gP = {}
     pidsForJoin = []
     for group in groups:
-        pids = resourceMonitor.cgroup.getCgroupPids(group)
+        pids = rM.cgroup.get_group_pids(group)
         gP[group] = len(pids)
         pidsForJoin += pids
 

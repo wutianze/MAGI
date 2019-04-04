@@ -128,11 +128,11 @@ class llcManager:
 
     # Sets all COS to default (fill into all ways) and associates all cores with COS 0
     def resetCAT(self,numCOS):
-        if subprocess.getstatusoutput('pqos -R') == 1:
+        if subprocess.getstatusoutput('pqos -R')[0] != 0:
             print("Err: resetCAT fail")
         self.freeLlc = ALLLLC
         self.cosLlc = {}
-        self.avaCOS = {}
+        self.avaCOS = set()
         for i in range(numCOS):
             self.avaCOS.add(i)
 
@@ -144,7 +144,7 @@ class llcManager:
         for cos,llc in zip(coses,llcs):
             cmd += "llc:" + str(cos) + "=" + str(llc) + ";"
         cmd += "\""
-        if subprocess.getstatusoutput(cmd) == 1:
+        if subprocess.getstatusoutput(cmd)[0] != 0:
             print("Err: allocCache Fail")
             return -1
         for cos,llc in zip(coses,llcs):
@@ -159,7 +159,7 @@ class llcManager:
         for cos,pids in zip(coses,pidss):
             cmd += "pid:" + str(cos) + "=" + str(pids) + ";"
         cmd += "\""
-        if subprocess.getstatusoutput(cmd) == 1:
+        if subprocess.getstatusoutput(cmd)[0] != 0:
             print("Err:assoProcessCOS Fail")
             return -1
         return 0
