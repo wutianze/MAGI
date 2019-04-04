@@ -167,4 +167,5 @@ class llcManager:
         
 
 if __name__ == '__main__':
-    pass
+    lm = llcManager(3)
+

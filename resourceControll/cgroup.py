@@ -18,7 +18,7 @@ def addProcs(subsystem,path_to_cgroup,pid):
     if subprocess.getstatusoutput('echo '+str(proId)+' > /sys/fs/cgroup/'+str(path)+'/cgroup.procs') == 1:
         print('Err: Add Process Fail')
 '''
-    if subprocess.getstatusoutput("cgclassify -g " + subsystem + ":" + path_to_cgroup + str(pid))[0] != 0:
+    if subprocess.getstatusoutput("cgclassify -g " + subsystem + ":" + path_to_cgroup + " " + str(pid)) != 0:
         print("Err: Add Process Fail")
 
 def startProcs(subsystems,path_to_cgroup,cmd):
@@ -51,7 +51,7 @@ def cfs_quotaCut(group,percent):
 
 if __name__ == '__main__':
     #addProcs(input("pid:"),input("path"))
-    createCgroup(input('subsystem:'),input('name:'))
+    #createCgroup(input('subsystem:'),input('name:'))
     #quotaSet(input("appName:"),input(" quota value:"))
     addProcs(input("subsystem:"),input("path_to_group:"),input("pid:"))
     #cpusSet(input("cpus:"),input("path_to_group:"))

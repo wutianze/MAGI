@@ -46,6 +46,7 @@ def getCgroupsLlc(groups):
         pidsForJoin += pids
 
     forHandle = subprocess.getoutput('pqos -I -p llc:' + str(','.join(pidsForJoin))).strip().split('\n')
+    print(forHandle)
     lineI = 1 #start from second line
     for group in groups:
         tmpSum = 0.0
@@ -80,5 +81,5 @@ def findGroupConsumeMostMbw(groups,ex):
 
 
 if __name__ == '__main__':
-    pass
-    
+    grps = ["app1"]
+    getCgroupsLlc(grps) 
