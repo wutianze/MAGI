@@ -101,7 +101,7 @@ class llcManager:
             if llcs == -1:
                 print("Err:some other process may change COS")
                 return -1
-            if self.allocCache([cos], [str(hex(llcs))]) == -1:
+            if self.allocCache([cos], [llcs]) == -1:
                 print("Err:lessLlc when re-allocate cache fail")
                 return -1
             return 0
@@ -119,16 +119,16 @@ class llcManager:
             llcs = self.findFreeLlc(num)
             if llcs == -1:
                 print("Err: No enough excessive cache")
-                self.allocCache([cos],[str(hex(old_llc))])
+                self.allocCache([cos],[old_llc])
                 return -1
-            if self.allocCache([cos], [str(hex(llcs))]) == -1:
+            if self.allocCache([cos], [llcs]) == -1:
                 print("Err:lessLlc when re-allocate cache fail")
                 return -1
             return 0
 
     # Sets all COS to default (fill into all ways) and associates all cores with COS 0
     def resetCAT(self,numCOS):
-        if subprocess.getstatusoutput('pqos -R')[0] != 0:
+        if subprocess.getstatusoutput('sudo pqos -R')[0] != 0:
             print("Err: resetCAT fail")
         self.__init__(numCOS)
 
@@ -147,7 +147,10 @@ class llcManager:
             self.freeLlc = self.freeLlc ^ llc
             self.cosLlc[cos] = llc
             if llc & self.cosLlc[0] != 0 and cos != 0:  # get from COS0
-                self.cosLlc[0] = self.cosLlc[0] ^ llc
+                self.cosLlc[0] = (self.cosLlc[0] & llc) ^ self.cosLlc[0]
+                if subprocess.getstatusoutput("sudo pqos -e \"llc:0=" + str(self.cosLlc[0]) + ";\"")[0] != 0:
+                    print("Err: allocCache Fail")
+                    return -1
         return 0
 
     def assoProcessCOS(self,pidss,coses):
@@ -164,7 +167,10 @@ class llcManager:
 
 if __name__ == '__main__':
     lm = llcManager(3)
-    lm.givePidSepLlc(4,33931)
+    cos = lm.givePidSepLlc(4,33931)
+    if cos == -1:
+        print("give wrong")
+    lm.moreLlc(cos, 2)
     lm.resetCAT(3)
     #print("%x",lm.findFreeLlc(4))
 
