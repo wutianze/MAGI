@@ -115,7 +115,7 @@ if __name__ == '__main__':
     parser.add_argument('--enable-detecting')
     parser.add_argument('--enable-training')
     parser.add_argument('--enable-data-driven')
-    parser.add_argument('--samples', type=str, default="", help="the groups needed to control")
+    parser.add_argument('--samples', type=str, default="", help="the groups needed to control")#here the groups shouldn't be full path,ex: app1 not /cpu/app1
     parser.add_argument('--accuracy', type=float, default=0.7, help="the threshold of model's accuracy")
     parser.add_argument('--sample-length', type=int, default=3, help="how many seconds the sampling measurement should cover")
     parser.add_argument('--sleep', type=int, default=4, help="pause sleep seconds between each round")

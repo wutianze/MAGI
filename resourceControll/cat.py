@@ -7,6 +7,7 @@ TOTALLLC = 20
 class llcManager:
     def __init__(self,numCOS):# numCOS doesn't have COS0,COS0 should keep at least 2 cache,and COS0's own caches are always remain in the left like: 0xc0000
         self.freeLlc = ALLLLC
+        self.cosLlc = {}
         self.cosLlc[0] = ALLLLC
         self.avaCOS = set()
         for i in range(numCOS):
@@ -32,7 +33,7 @@ class llcManager:
             return -1
         llc = 0
         for i in range(num):
-            llc += 2 ^ i
+            llc += 2 ** i
         for i in range(TOTALLLC - 2):# because there are 2 caches for COS0
             if (self.freeLlc >> i) & llc == llc:
                 return llc << i
@@ -45,15 +46,14 @@ class llcManager:
             return -1
         else:
             cos = self.avaCOS.pop()
-            toAss = [pids]
-            if self.assoProcessCOS(toAss,cos) == -1:
+            if self.assoProcessCOS([pids],[cos]) == -1:
                 self.avaCOS.add(cos)
                 return -1
             llcs = self.findFreeLlc(num)
             if llcs == -1:
                 print("Find free llc fail")
                 return -1
-            if self.allocCache([cos],[str(hex(llcs))]) == -1:
+            if self.allocCache([cos],[llcs]) == -1:
                 self.avaCOS.add(cos)
                 return -1
             return cos
@@ -73,7 +73,7 @@ class llcManager:
         freeLeftEnd += 1
         if freeLeftEnd < cos0End:  # mean can combine cache to cos0
             newCOS0 = (self.freeLlc >> freeLeftEnd) << freeLeftEnd
-            if self.allocCache([0],[str(hex(newCOS0))]) == -1:
+            if self.allocCache([0],[newCOS0]) == -1:
                 return -1
         return 0
 
@@ -130,17 +130,13 @@ class llcManager:
     def resetCAT(self,numCOS):
         if subprocess.getstatusoutput('pqos -R')[0] != 0:
             print("Err: resetCAT fail")
-        self.freeLlc = ALLLLC
-        self.cosLlc = {}
-        self.avaCOS = set()
-        for i in range(numCOS):
-            self.avaCOS.add(i)
+        self.__init__(numCOS)
 
     # set COS i to the x cache ways
     # both pqos -e and pqos -I -e can be used,llcs must be str !!
     # ex:"llc:1=0x000f;llc:2=0x0ff0"
     def allocCache(self,coses,llcs):
-        cmd = "pqos -e \""
+        cmd = "sudo pqos -e \""
         for cos,llc in zip(coses,llcs):
             cmd += "llc:" + str(cos) + "=" + str(llc) + ";"
         cmd += "\""
@@ -155,7 +151,7 @@ class llcManager:
         return 0
 
     def assoProcessCOS(self,pidss,coses):
-        cmd = "pqos -I -a \""
+        cmd = "sudo pqos -I -a \""
         for cos,pids in zip(coses,pidss):
             cmd += "pid:" + str(cos) + "=" + str(pids) + ";"
         cmd += "\""
@@ -168,4 +164,7 @@ class llcManager:
 
 if __name__ == '__main__':
     lm = llcManager(3)
+    lm.givePidSepLlc(4,33931)
+    lm.resetCAT(3)
+    #print("%x",lm.findFreeLlc(4))
 

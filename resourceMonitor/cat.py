@@ -4,7 +4,7 @@ sys.path.append("..")
 import resourceMonitor as rM
 
 def getCpuInfo(pid):
-    return subprocess.getoutput('pqos -t1 -I -p all:'+str(pid))
+    return subprocess.getoutput('sudo pqos -t1 -I -p all:'+str(pid))
 
 
 def getIpc(pid):
@@ -13,7 +13,7 @@ def getIpc(pid):
 
 # get mem-bw of a single process
 def getPidMbw(pid):
-    forHandle = subprocess.getoutput('pqos -t1 -I -p mbl:' + str(pid)).strip()
+    forHandle = subprocess.getoutput('sudo pqos -t 1 -I -p mbl:' + str(pid)).strip()
     return 2.2
 
 
@@ -25,13 +25,14 @@ def getCgroupsMbw(groups):
         gP[group] = len(pids)
         pidsForJoin += pids
 
-    forHandle = subprocess.getoutput('pqos -t1 -I -p mbl:' + str(','.join(pidsForJoin))).strip().split('\n')
-    lineI = 1 #start from second line
+    forHandle = subprocess.getoutput('sudo pqos -t 1 -I -p mbl:' + str(','.join(pidsForJoin))).strip().split('\n')
+    lineI = 6 + len(pidsForJoin)  #start from second line
     for group in groups:
         tmpSum = 0.0
         for i in range(int(gP[group])):
-            values = forHandle[lineI].split(' ')
-            tmpSum += float(values[0])# TODO values[?]
+            values = forHandle[lineI].split()
+            tmpSum += float(values[4])# TODO values[?]
+            lineI += 1
         gP[group] = tmpSum
 
     return gP
@@ -45,14 +46,15 @@ def getCgroupsLlc(groups):
         gP[group] = len(pids)
         pidsForJoin += pids
 
-    forHandle = subprocess.getoutput('pqos -t1 -I -p llc:' + str(','.join(pidsForJoin))).strip().split('\n')
-    print(forHandle)
-    lineI = 1 #start from second line
+    forHandle = subprocess.getoutput('sudo pqos -t 1 -I -p llc:' + str(','.join(pidsForJoin))).strip().split('\n')
+    #print(forHandle)
+    lineI = 6 + len(pidsForJoin) #start from second line
     for group in groups:
         tmpSum = 0.0
         for i in range(int(gP[group])):
-            values = forHandle[lineI].split(' ')
-            tmpSum += float(values[0])# TODO values[?]
+            values = forHandle[lineI].split()
+            tmpSum += float(values[2])
+            lineI += 1
         gP[group] = tmpSum
     return gP
 
@@ -63,7 +65,7 @@ def findGroupConsumeMostLlc(groups,ex):
     res = ""
     mostL = 0.0
     for key in data.keys():
-        if data[key] > mostL and key != ex:
+        if data[key] >= mostL and key != ex:
             mostL = data[key]
             res = key
     return res
@@ -74,12 +76,12 @@ def findGroupConsumeMostMbw(groups,ex):
     res = ""
     mostL = 0.0
     for key in data.keys():
-        if data[key] > mostL and key != ex:
+        if data[key] >= mostL and key != ex:
             mostL = data[key]
             res = key
     return res
 
 
 if __name__ == '__main__':
-    grps = ["app1"]
-    getCgroupsLlc(grps) 
+    grps = ["/cpu/app1","/cpu/app2"]
+    findGroupConsumeMostLlc(grps,"")
