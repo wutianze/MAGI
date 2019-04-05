@@ -40,20 +40,20 @@ class llcManager:
         print("No enough excessive free llc")#may do a clear up
         return -1 # mean wrong
 
-    def givePidSepLlc(self,num,pids):
+    def givePidSepLlc(self, num, pids):
         if len(self.avaCOS) == 0:
             print("No available COS")
             return -1
         else:
             cos = self.avaCOS.pop()
-            if self.assoProcessCOS([pids],[cos]) == -1:
+            if self.assoProcessCOS([pids], [cos]) == -1:
                 self.avaCOS.add(cos)
                 return -1
             llcs = self.findFreeLlc(num)
             if llcs == -1:
                 print("Find free llc fail")
                 return -1
-            if self.allocCache([cos],[llcs]) == -1:
+            if self.allocCache([cos], [llcs]) == -1:
                 self.avaCOS.add(cos)
                 return -1
             return cos
@@ -89,7 +89,7 @@ class llcManager:
         return 0
 
     # cut the llc in cos by num
-    def lessLlc(self,cos,num):
+    def lessLlc(self, cos, num):
         if int(num) >= self.cosLlcNum(cos):
             print("Err:No enough llc to cut in lessLlc")
             return -1
@@ -106,7 +106,7 @@ class llcManager:
                 return -1
             return 0
 
-    def moreLlc(self,cos,num):
+    def moreLlc(self, cos, num):
         if int(num) >= self.cosLlcNum(cos) + self.cosLlcNum(-1):
             print("Err:No enough llc to cut in lessLlc")
             return -1
@@ -127,7 +127,7 @@ class llcManager:
             return 0
 
     # Sets all COS to default (fill into all ways) and associates all cores with COS 0
-    def resetCAT(self,numCOS):
+    def resetCAT(self, numCOS):
         if subprocess.getstatusoutput('sudo pqos -R')[0] != 0:
             print("Err: resetCAT fail")
         self.__init__(numCOS)
@@ -135,15 +135,15 @@ class llcManager:
     # set COS i to the x cache ways
     # both pqos -e and pqos -I -e can be used,llcs must be str !!
     # ex:"llc:1=0x000f;llc:2=0x0ff0"
-    def allocCache(self,coses,llcs):
+    def allocCache(self, coses, llcs):
         cmd = "sudo pqos -e \""
-        for cos,llc in zip(coses,llcs):
+        for cos, llc in zip(coses,llcs):
             cmd += "llc:" + str(cos) + "=" + str(llc) + ";"
         cmd += "\""
         if subprocess.getstatusoutput(cmd)[0] != 0:
             print("Err: allocCache Fail")
             return -1
-        for cos,llc in zip(coses,llcs):
+        for cos, llc in zip(coses,llcs):
             self.freeLlc = self.freeLlc ^ llc
             self.cosLlc[cos] = llc
             if llc & self.cosLlc[0] != 0 and cos != 0:  # get from COS0
@@ -153,9 +153,9 @@ class llcManager:
                     return -1
         return 0
 
-    def assoProcessCOS(self,pidss,coses):
+    def assoProcessCOS(self, pidss, coses):
         cmd = "sudo pqos -I -a \""
-        for cos,pids in zip(coses,pidss):
+        for cos,pids in zip(coses, pidss):
             cmd += "pid:" + str(cos) + "=" + str(pids) + ";"
         cmd += "\""
         if subprocess.getstatusoutput(cmd)[0] != 0:
