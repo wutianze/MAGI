@@ -104,6 +104,7 @@ class llcManager:
             if self.allocCache([cos], [llcs]) == -1:
                 print("Err:lessLlc when re-allocate cache fail")
                 return -1
+            self.avaCOS.remove(cos)
             return 0
 
     def moreLlc(self, cos, num):
@@ -124,6 +125,7 @@ class llcManager:
             if self.allocCache([cos], [llcs]) == -1:
                 print("Err:lessLlc when re-allocate cache fail")
                 return -1
+            self.avaCOS.remove(cos)
             return 0
 
     # Sets all COS to default (fill into all ways) and associates all cores with COS 0
@@ -144,9 +146,10 @@ class llcManager:
             print("Err: allocCache Fail")
             return -1
         for cos, llc in zip(coses,llcs):
-            self.freeLlc = self.freeLlc ^ llc
+
             self.cosLlc[cos] = llc
-            if llc & self.cosLlc[0] != 0 and cos != 0:  # get from COS0
+            if cos != 0:
+                self.freeLlc = self.freeLlc ^ llc
                 self.cosLlc[0] = (self.cosLlc[0] & llc) ^ self.cosLlc[0]
                 if subprocess.getstatusoutput("sudo pqos -e \"llc:0=" + str(self.cosLlc[0]) + ";\"")[0] != 0:
                     print("Err: allocCache Fail")
@@ -171,6 +174,10 @@ if __name__ == '__main__':
     if cos == -1:
         print("give wrong")
     lm.moreLlc(cos, 2)
+    cos2 = lm.givePidSepLlc(5,3479)
+    lm.lessLlc(cos2,3)
+    lm.recycleCOS(cos)
+    lm.recycleCOS(cos2)
     lm.resetCAT(3)
     #print("%x",lm.findFreeLlc(4))
 
