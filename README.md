@@ -23,3 +23,5 @@
   - configs.sh中变量设置
   - xapian
     先进入xapian解压出的文件夹，使用./configure看是否需要安装libuuid-devel等
+  - shore
+    同样建议先进入shore来安装，需要安装的可能有automake,glib2-devel等库，且centos会出现glibconfig.h找不到的情况，需要将/usr/lib64/glib-2/include/glibconfig.h拷贝到/usr/include/glib-2/中
