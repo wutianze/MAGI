@@ -13,6 +13,7 @@ def createCgroup(subsystem,name):
     if subprocess.getstatusoutput("sudo cgcreate -g " + subsystem + ":" + name)[0] != 0:
        print("Err: create cgroup")
 
+# pids split by ' '
 def addProcs(subsystem,path_to_cgroup,pid):
     '''
     if subprocess.getstatusoutput('echo '+str(proId)+' > /sys/fs/cgroup/'+str(path)+'/cgroup.procs') == 1:

@@ -2,11 +2,11 @@ import subprocess
 
 toplevPath = "/home/sauron/MAGI/pmu-tools/toplev.py "
 def topDownGroup(group):
-    cmd = toplevPath + "-l1 -x'|' --no-desc --quiet -G " + str(group) + " sleep 5"
+    cmd = "sudo " + toplevPath + "-l1 -x'|' --no-desc --quiet -G " + str(group) + " sleep 5"
     toHandle = subprocess.getoutput(cmd).strip().split('\n')
     res = {}
     for line in toHandle:
-        if(line[0] == 'C'):
+        if(line[0] == 'S'): #!! need to adapt to differnt machines
             lineS = line.split('|')
             print(lineS)
             if lineS[0] in res.keys():
@@ -29,6 +29,6 @@ def topDownPid(pid):
     toHandle = subprocess.getoutput(cmd)
     return toHandle
 if __name__ == "__main__":
-    print(topDownGroup(input("group:")))
+    print(topDownGroup(input("group:")))#ex :app1
     #print(topDownPid(input("pid:")))
 

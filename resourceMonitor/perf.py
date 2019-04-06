@@ -52,7 +52,7 @@ def getInfoList(configs,time):
 
 def getAllInfo(groups, sample_len):
     print("getAllInfo start")
-    cmd_str = perfPath + " stat -a -x'|'"
+    cmd_str = "sudo " + perfPath + " stat -a -x'|'"
     for group in groups:
         cmd_str += " -e "
         for event in avaTar:
@@ -70,6 +70,8 @@ def getAllInfo(groups, sample_len):
             if event in fromEvent.keys():
                 event = fromEvent[event]
             val = forHandle[index].strip().split('|')[0]
+            if val == "<not counted>":# if the app is not running, events like instructions may be not counted
+                val = 0
             index = index + 1
             groupData[event] = val
         res[group] = groupData
@@ -81,4 +83,4 @@ if __name__ == '__main__':
     #li = [tu,tu2]
     print("start test")
     groups = ["app1"]
-    print(getAllInfo(groups))
+    print(getAllInfo(groups,2))
