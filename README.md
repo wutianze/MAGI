@@ -20,5 +20,6 @@
     - 须根据实际机器更改代码中判断有效行的条件
 
 # test init
+  - configs.sh中变量设置
   - xapian
     先进入xapian解压出的文件夹，使用./configure看是否需要安装libuuid-devel等
