@@ -15,10 +15,10 @@ subTar = ["instructions","cycles","loads_and_stores","cache-misses"]
 
 class Policy:
     def __init__(self,group,groups,control_config,accuracy):
-        self.own = group
+        self.own = group# "app1"
         self.controlConfig = control_config
         self.estimator = es.Estimator(accuracy)
-        self.groups = groups
+        self.groups = groups#["app1","app2"]
         self.currentInfo = {}
         self.roundHistoryX = []
         self.roundHistoryy = []
@@ -47,10 +47,10 @@ class Policy:
     def generate_one_train_data(self, infoList):
         train_X = []
         for tar in subTar:
-            train_X.append(infoList[self.own][tar])
+            train_X.append(infoList[self.own][tar])#infoList["app1"][...]
         for tar in mainExTar:
             train_X.append(infoList[self.own][tar])
-        for g in self.groups:
+        for g in self.groups:# groups:["app1","app2"] g: "app1"
             if g != self.own:
                 for tar in subTar:
                     train_X.append(infoList[g][tar])
@@ -90,7 +90,7 @@ class Policy:
 
 
     def find_basic_x(self, curr_x):
-        small_set = self.estimator.find_sv_statisfy_v(self.historyX, self.historyy, float(self.controlConfig["SLA"]))
+        small_set = self.estimator.find_sv_statisfy_v(self.historyX, self.historyy, float(self.controlConfig[self.own]["SLA"]))
         basic_x = None
         least_diff = 9999999.9
         for x in small_set:
@@ -123,77 +123,128 @@ class Policy:
         return target
 
 
-    def set_throttle_setup(self, target, groupCOS, throttled_group, llcM):
+    def set_throttle_setup(self, badGroup, groupCOS, throttled_group, llcM):
         curGI = self.currentInfo[self.own]
         # memory-bound
         if float(curGI["instructions"]) / float(curGI["cycles"]) < RULEIPCBOUND and float(
                 curGI["cache-misses"]) * 1000.0 / float(curGI["instructions"]) > RULEMPKIBOUND:
             # llc-bound
-            if float(rM.cat.getCgroupsMbw([self.own])[self.own]) / 1024.0 < RULEMEMBWBOUND:
-                if groupCOS[self.own] != 0:
-                    if llcM.moreLlc(groupCOS[self.own], 2) == -1:  # give 2 more cache
-                        if llcM.lessLlc(groupCOS[target], 2) == -1:
-                            if rC.cfs_quotaCut(target) == -1:
-                                return -1
+            if llcM.cosLlcNum(self.own) >= self.controlConfig[self.own]["maxium_steups"]["llc"] or llcM.moreLlc(
+                    groupCOS[self.own], int((self.controlConfig[self.own]["maxium_steups"]["llc"] - llcM.cosLlcNum(
+                            self.own)) / 2) + 1) == -1:
+                if llcM.cosLlcNum[badGroup] <= self.controlConfig[badGroup]["mininum_setups"]["llc"] or llcM.lessLlc(
+                        groupCOS[badGroup], int((llcM.cosLlcNum[badGroup] -
+                                                 self.controlConfig[badGroup]["mininum_setups"]["llc"]) / 2) + 1) == -1:
+                    now_quota = rM.get_cfs_quota(badGroup)
+                    if now_quota * 0.8 > self.controlConfig[badGroup]["mininum_setups"]["cpu"]:
+                        if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                            return -1
+                    else:
+                        if rC.cfs_quotaCut(badGroup, float(
+                                self.controlConfig[badGroup]["mininum_setups"]["cpu"] / now_quota)) == -1:
+                            return -1
             # mem-bw-bound
             else:
-                if rC.cfs_quotaCut(target, 0.8) == -1:
-                    return -1
+                now_quota = rM.get_cfs_quota(badGroup)
+                if now_quota * 0.8 > self.controlConfig[badGroup]["mininum_setups"]["cpu"]:
+                    if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                        return -1
+                else:
+                    if rC.cfs_quotaCut(badGroup, float(
+                            self.controlConfig[badGroup]["mininum_setups"]["cpu"] / now_quota)) == -1:
+                        return -1
         # core-bound
         else:
-            if rC.cfs_quotaCut(target, 0.8) == -1:
-                return -1
-        throttled_group.append(target)
+            now_quota = rM.get_cfs_quota(badGroup)
+            if now_quota * 0.8 > self.controlConfig[badGroup]["mininum_setups"]["cpu"]:
+                if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                    return -1
+            else:
+                if rC.cfs_quotaCut(badGroup, float(
+                        self.controlConfig[badGroup]["mininum_setups"]["cpu"] / now_quota)) == -1:
+                    return -1
+        throttled_group.add(badGroup)
+        return 0
 
 
     def throttle_target_select_setup(self, groupCOS, throttled_group, llcM):
-        target = self.select_throttle_target()
-        if target == "":
+        badGroup = self.select_throttle_target()
+        if badGroup == "":
             # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
             print("Have no targets")
             return -1
         else:
             # self.logger.info("using policy %s to make decision",policy.name)
-            self.set_throttle_setup(target, groupCOS, throttled_group, llcM)
+            if self.set_throttle_setup(badGroup, groupCOS, throttled_group, llcM) == -1:
+                print("Warning: set_throttle_setup fail")
             return 0
 
 
     # RULE Model
     def rule_update(self, groupCOS, throttled_group, llcM):
-        boundPart = rM.pmu.topDownGroup(self.own)
+        boundPart = rM.pmu.topDownGroup(self.own)# self.own is like "app1"
         curGI = self.currentInfo[self.own]
         badGroup = ""
         if boundPart == "Backend_Bound":
             # memory-bound
             if float(curGI["instructions"])/float(curGI["cycles"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
                 # llc-bound
-                if float(rM.cat.getCgroupsMbw([self.own])[self.own])/1024.0 < RULEMEMBWBOUND:
+                if float(rM.cat.getCgroupsMbw(["perf_event/" + self.own])[self.own])/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
-                    if groupCOS[self.own] != 0:
-                        if llcM.moreLlc(groupCOS[self.own], 2) == -1:# give 2 more cache
-                            badGroup = rM.findGroupConsumeMostLlc(self.groups, self.own)
-                            if llcM.lessLlc(groupCOS[badGroup],2) == -1:
-                                if rC.cfs_quotaCut(badGroup) == -1:
+                    if llcM.cosLlcNum(self.own) >= self.controlConfig[self.own]["maxium_steups"]["llc"] or llcM.moreLlc(groupCOS[self.own], int((self.controlConfig[self.own]["maxium_steups"]["llc"] - llcM.cosLlcNum(self.own)) / 2) + 1) == -1:
+                        badGroup = rM.findGroupConsumeMostLlc(self.groups, self.own)
+                        if llcM.cosLlcNum[badGroup] <= self.controlConfig[badGroup]["mininum_setups"]["llc"] or llcM.lessLlc(groupCOS[badGroup], int((llcM.cosLlcNum[badGroup] - self.controlConfig[badGroup]["mininum_setups"]["llc"]) / 2) + 1) == -1:
+                            now_quota = rM.get_cfs_quota(badGroup)
+                            if now_quota * 0.8 > self.controlConfig[badGroup]["mininum_setups"]["cpu"]:
+                                if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                                    return -1
+                            else:
+                                if rC.cfs_quotaCut(badGroup, float(self.controlConfig[badGroup]["mininum_setups"]["cpu"] / now_quota)) == -1:
                                     return -1
                 # mem-bw-bound
                 else:
                     badGroup = rM.findGroupConsumeMostMbw(self.groups,self.own)
-                    if rC.cfs_quotaCut(badGroup,0.8) == -1:
-                        return -1
+                    now_quota = rM.get_cfs_quota(badGroup)
+                    if now_quota * 0.8 > self.controlConfig[badGroup]["mininum_setups"]["cpu"]:
+                        if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                            return -1
+                    else:
+                        if rC.cfs_quotaCut(badGroup, float(
+                                self.controlConfig[badGroup]["mininum_setups"]["cpu"] / now_quota)) == -1:
+                            return -1
             # core-bound
             else:
-                badGroup = rM.getCoGroup(self.own,self.groups)
-                if rC.cfs_quotaCut(badGroup,0.8) == -1:
-                    return -1
+                detail_groups = []
+                for g in self.groups:
+                    detail_groups.append("perf_event/" + g)
+                badGroup = rM.getCoGroup("perf_event/" + self.own, detail_groups)# change the input to "cpu/app1" style
+                now_quota = rM.get_cfs_quota(badGroup)
+                if now_quota * 0.8 > self.controlConfig[badGroup]["mininum_setups"]["cpu"]:
+                    if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                        return -1
+                else:
+                    if rC.cfs_quotaCut(badGroup, float(
+                            self.controlConfig[badGroup]["mininum_setups"]["cpu"] / now_quota)) == -1:
+                        return -1
         elif boundPart == "Frontend_Bound":
-            badGroup = rM.getCoGroup(self.own, self.groups)
-            if rC.cfs_quotaCut(badGroup, 0.8) == -1:
-                return -1
+            detail_groups = []
+            for g in self.groups:
+                detail_groups.append("perf_event/" + g)
+            badGroup = rM.getCoGroup("perf_event/" + self.own,detail_groups)# change the input to "cpu/app1" style
+            now_quota = rM.get_cfs_quota(badGroup)
+            if now_quota * 0.8 > self.controlConfig[badGroup]["mininum_setups"]["cpu"]:
+                if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                    return -1
+            else:
+                if rC.cfs_quotaCut(badGroup, float(
+                        self.controlConfig[badGroup]["mininum_setups"]["cpu"] / now_quota)) == -1:
+                    return -1
 
         else:
             print("Err: Rule Model can do Nothing more")
             return -1
-        throttled_group.append(badGroup)
+        if badGroup != "":
+            throttled_group.add(badGroup)
         return 0
 
 if __name__ == '__main__':

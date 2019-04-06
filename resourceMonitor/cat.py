@@ -16,7 +16,7 @@ def getPidMbw(pid):
     forHandle = subprocess.getoutput('sudo pqos -t 1 -I -p mbl:' + str(pid)).strip()
     return 2.2
 
-
+# groups are like ["cpu/app1","perf_event/app2"]
 def getCgroupsMbw(groups):
     gP = {}
     pidsForJoin = []
@@ -37,7 +37,7 @@ def getCgroupsMbw(groups):
 
     return gP
 
-
+# groups are like ["cpu/app1","perf_event/app2"]
 def getCgroupsLlc(groups):
     gP = {}
     pidsForJoin = []

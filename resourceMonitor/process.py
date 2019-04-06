@@ -1,6 +1,8 @@
 import psutil
 import time
 import resourceMonitor.cgroup as cg
+
+# group is like "cpu/app1"
 def getGroupStart(group):
     pids = cg.get_group_pids(group)
     res = time.time()
@@ -14,6 +16,7 @@ def getGroupStart(group):
     return res
 
 # get the group which co-located with aim for the most of time
+# group is like "cpu/app1", allG should be ["cpu/app1", "cpu/perf_event"]
 def getCoGroup(group,allG):
     aimS = getGroupStart(group)
     leastGap = time.time()

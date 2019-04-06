@@ -90,6 +90,9 @@ class llcManager:
 
     # cut the llc in cos by num
     def lessLlc(self, cos, num):
+        if cos == 0:
+            print("Err: lessLlc have cos=0")
+            return -1
         if int(num) >= self.cosLlcNum(cos):
             print("Err:No enough llc to cut in lessLlc")
             return -1
@@ -108,8 +111,14 @@ class llcManager:
             return 0
 
     def moreLlc(self, cos, num):
+        if cos == 0:
+            if self.tryCombineFreeCOS0() == -1:
+                print("Err: moreLlc have cos=0 and combineFree fail")
+                return -1
+            print("Warning: Try to give more llc to COS0, tried best")
+            return 0
         if int(num) >= self.cosLlcNum(cos) + self.cosLlcNum(-1):
-            print("Err:No enough llc to cut in lessLlc")
+            print("Err: No enough llc to cut in lessLlc")
             return -1
         else:
             old_num = self.cosLlcNum(cos)

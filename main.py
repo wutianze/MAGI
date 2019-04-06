@@ -14,19 +14,19 @@ class CpuController:
         self.enable_training = en_train
         self.enable_detecting = en_detect
         self.sleep_interval = sleep_interval
-        self.allGroups = samples
+        self.allGroups = samples# ["app1","app2"]
         self.sample_len = sample_len
 
         controll_config = json.loads(open(configFile,'r').read())
         self.policies = {}
-        for g in controll_config.keys():
-            self.policies[g] = po.Policy(g, self.allGroups, controll_config[g], accuracy)
+        for g in controll_config.keys():# g is just "app1", not "cpu/app1"
+            self.policies[g] = po.Policy(g, self.allGroups, controll_config, accuracy)
 
         self.currentInfo = {}
         self.llcM = rC.cat.llcManager(4)
         self.groupCOS = {}
 
-        self.throttled_group = []
+        self.throttled_group = set()
 
 
     # try to add the groups who break SLA
@@ -35,7 +35,7 @@ class CpuController:
         samples = []
         for group in self.currentInfo.keys():
             # now the sla depends on ipc=instructions/cycles
-            if float(self.currentInfo[group]["instructions"])/float(self.currentInfo[group]["cycles"]) < float(self.policies[group].controlConfig["SLA"]["ipc"]):
+            if float(self.currentInfo[group]["instructions"])/float(self.currentInfo[group]["cycles"]) < float(self.policies[group].controlConfig[group]["SLA"]["ipc"]):
                 samples.append(group)
         #TODO:sava the currentInfo for future use
         return samples
@@ -94,9 +94,16 @@ class CpuController:
 
     def start_cpu_relax_analyst(self):
         for t in self.throttled_group:
-            if self.llcM.moreLlc(self.groupCOS[t], 2) == -1:
-                if rC.cfs_quotaCut(t, 1.25) == -1:
-                    return -1
+            if self.policies[t].controlConfig[t]["maxium_steups"]["llc"] <= self.llcM.cosLlcNum(t) or self.llcM.moreLlc(self.groupCOS[t], int((self.policies[t].controlConfig["maxium_steups"]["llc"] - self.llcM.cosLlcNum(t)) / 2) + 1) == -1:
+                now_quota = rM.get_cfs_quota(t)
+                if self.policies[t].controlConfig[t]["maxium_steups"]["cpu"] > now_quota * 1.25:
+                    if rC.cfs_quotaCut(t, 1.25) == -1:
+                        return -1
+                else:
+                    if rC.cfs_quotaCut(t,float(self.policies[t].controlConfig[t]["maxium_steups"]["cpu"] / now_quota)) == -1:
+                        return -1
+
+        return 0
 
 
     def start_cpu_throttle_analyst(self, group):
@@ -126,7 +133,10 @@ if __name__ == '__main__':
     samples = args.samples.strip().split(',')
 
     for s in samples:
+        rC.createCgroup("cpu,perf_event", s)
         rC.startProcs("cpu,perf_event", s, "sudo ./run_" + s)
+
+    # here samples are like : ["app1","app2"]
     c = CpuController(args.config, samples, en_data, en_tra, en_det, args.accuracy, args.sleep, args.sample_length)
     c.run()
 

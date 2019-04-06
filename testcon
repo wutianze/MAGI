@@ -1,5 +1,5 @@
 {
-	"/apasra/tubo":{
+	"xapian":{
 		"SLA":{
 			"ipc":0.6
 			},
@@ -12,7 +12,7 @@
 			"llc":5
 			}
 		},
-	"carts20111.na61":{
+	"shore":{
 		"SLA":{
 			"ipc":0.6
 			},

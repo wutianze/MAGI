@@ -50,6 +50,7 @@ def getInfoList(configs,time):
     #return subprocess.getoutput(cmd_str).strip().split()
     '''
 
+# groups is like ["app1","app2"]
 def getAllInfo(groups, sample_len):
     print("getAllInfo start")
     cmd_str = "sudo " + perfPath + " stat -a -x'|'"
