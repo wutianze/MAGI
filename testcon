@@ -1,4 +1,17 @@
 {
+"top":{
+		"SLA":{
+			"ipc":0.6
+			},
+		"minimum_setups":{
+			"cpu":10000,
+			"llc":1
+			},
+		"maximum_steups":{
+			"cpu":50000,
+			"llc":5
+			}
+		},
 	"xapian":{
 		"SLA":{
 			"ipc":0.6

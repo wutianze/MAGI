@@ -40,7 +40,7 @@ class llcManager:
         print("No enough excessive free llc")#may do a clear up
         return -1 # mean wrong
 
-    def givePidSepLlc(self, num, pids):
+    def givePidSepLlc(self, pids, num):
         if len(self.avaCOS) == 0:
             print("No available COS")
             return -1
@@ -138,6 +138,7 @@ class llcManager:
             self.avaCOS.remove(cos)
             return 0
 
+
     # Sets all COS to default (fill into all ways) and associates all cores with COS 0
     def resetCAT(self, numCOS):
         if subprocess.getstatusoutput('sudo pqos -R')[0] != 0:
@@ -171,20 +172,23 @@ class llcManager:
         for cos,pids in zip(coses, pidss):
             cmd += "pid:" + str(cos) + "=" + str(pids) + ";"
         cmd += "\""
+        '''
         if subprocess.getstatusoutput(cmd)[0] != 0:
             print("Err:assoProcessCOS Fail")
             return -1
+            '''
+        print(subprocess.getstatusoutput(cmd))
         return 0
 
         
 
 if __name__ == '__main__':
     lm = llcManager(3)
-    cos = lm.givePidSepLlc(4,"33931")
+    cos = lm.givePidSepLlc("33931",4)
     if cos == -1:
         print("give wrong")
     lm.moreLlc(cos, 2)
-    cos2 = lm.givePidSepLlc(5,"3479")
+    cos2 = lm.givePidSepLlc("3479",5)
     lm.lessLlc(cos2,3)
     lm.recycleCOS(cos)
     lm.recycleCOS(cos2)

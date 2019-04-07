@@ -3,6 +3,7 @@ import sys
 sys.path.append("..")
 import subprocess
 import resourceMonitor as rM
+from multiprocessing import Process # not Thread , Thread pid is the same as main process
 
 # name is like "app1"
 def createCgroup(subsystem,name):
@@ -24,11 +25,18 @@ def addProcs(subsystem,path_to_cgroup,pid):
     if subprocess.getstatusoutput("sudo cgclassify -g " + subsystem + ":" + path_to_cgroup + " " + str(pid)) [0] != 0:
         print("Err: Add Process Fail")
 
+def new_app(subsystem, path_to_cgroup, cmd):
+    if subprocess.getstatusoutput("sudo cgexec -g " + subsystem + ":" + path_to_cgroup + " " + cmd)[0] != 0:
+        print("Err: Start or Running Process in cgroup Fail")
 
 # path_to_cgroup is like "app1"
 def startProcs(subsystem, path_to_cgroup, cmd):
-    if subprocess.getstatusoutput("sudo cgexec -g " + subsystem + ":" + path_to_cgroup + " " + cmd)[0] != 0:
-        print("Err: Start Process in cgroup Fail")
+    newP = Process(target=new_app, args=(subsystem, path_to_cgroup, cmd))
+    newP.start()
+
+def deleteCgroup(subsystem, path_to_cgroup):
+    if subprocess.getstatusoutput("sudo cgdelete " + subsystem + ":" + path_to_cgroup)[0] != 0:
+        print("Err: Delete cgroup Fail")
 
 # group is like "app1"
 def cfs_quotaSet(group,quota):

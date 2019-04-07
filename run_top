@@ -1,0 +1,6 @@
+#! /bin/bash
+while [ 1 -gt 0 ]
+do
+    echo 'in run' > /dev/null
+    sleep 1
+done

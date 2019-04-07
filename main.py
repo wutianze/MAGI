@@ -5,14 +5,14 @@ import time
 import policy as po
 import resourceMonitor as rM
 import resourceControll as rC
+import subprocess
 
 class CpuController:
-    def __init__(self, controll_config, samples, en_data, en_train, en_detect, accuracy, sleep_interval, sample_len, llcM):
+    def __init__(self, controll_config, samples, en_data, en_train, accuracy, sleep_interval, sample_len, llcM):
         #self.logging.basicConfig('logger.log',logging.INFO)
         #self.logger = logging.getLogger('example1')
         self.enable_data_driven = en_data
         self.enable_training = en_train
-        self.enable_detecting = en_detect
         self.sleep_interval = sleep_interval
         self.allGroups = samples# ["app1","app2"]
         self.sample_len = sample_len
@@ -50,8 +50,7 @@ class CpuController:
             sample = self.try_to_add_sample()
             for g in self.policies.keys():
                 self.policies[g].with_run(self.currentInfo, self.enable_training)
-            if self.enable_detecting:
-                self.check_cpu(sample)
+            self.check_cpu(sample)
 
 
 # select the least-ipc group in sample
@@ -116,37 +115,55 @@ class CpuController:
         return 0
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='help manual')
-    parser.add_argument('--config', type=str, default="./config.json")
-    parser.add_argument('--enable-detecting')
-    parser.add_argument('--enable-training')
-    parser.add_argument('--enable-data-driven')
-    parser.add_argument('--samples', type=str, default="", help="the groups needed to control")#here the groups shouldn't be full path,ex: app1 not /cpu/app1
-    parser.add_argument('--accuracy', type=float, default=0.7, help="the threshold of model's accuracy")
-    parser.add_argument('--sample-length', type=int, default=3, help="how many seconds the sampling measurement should cover")
-    parser.add_argument('--sleep', type=int, default=4, help="pause sleep seconds between each round")
-    args = parser.parse_args()
-    en_data = args.enable_data_driven != None
-    en_det = args.enable_detecting != None
-    en_tra = args.enable_training != None
-    samples = args.samples.strip().split(',')
+    s_f = []
+    try:
+        parser = argparse.ArgumentParser(description='help manual')
+        parser.add_argument('--config', type=str, default="./testcon")
+        parser.add_argument('--enable-training')
+        parser.add_argument('--enable-data-driven')
+        parser.add_argument('--samples', type=str, default="",
+                            help="the groups needed to control")  # here the groups shouldn't be full path,ex: app1 not /cpu/app1
+        parser.add_argument('--accuracy', type=float, default=0.7, help="the threshold of model's accuracy")
+        parser.add_argument('--sample-length', type=int, default=3,
+                            help="how many seconds the sampling measurement should cover")
+        parser.add_argument('--sleep', type=int, default=4, help="pause sleep seconds between each round")
+        args = parser.parse_args()
+        en_data = args.enable_data_driven != None
+        en_tra = args.enable_training != None
+        samples = args.samples.strip().split(',')
+        s_f = samples
 
-    controll_config = json.loads(open(args.config, 'r').read())
-    llcM = rC.cat.llcManager(4)
+        controll_config = json.loads(open(args.config, 'r').read())
+        llcM = rC.cat.llcManager(4)
 
-    for s in samples:
-        rC.createCgroup("cpu,perf_event", s)
-        rC.startProcs("cpu,perf_event", s, "sudo ./run_" + s)
-        # initial period is 100000, give app the maximum
-        rC.cfs_quotaSet(s, controll_config[s]["maximum_steups"]["cpu"])
-        pids = rM.get_group_pids("perf_event/" + s)
-        pa_pids = ','.join([str(i) for i in pids])
-        if llcM.givePidSepLlc(pa_pids, controll_config[s]["maximum_steups"]["llc"]) == -1:
-            if llcM.givePidSepLlc(pa_pids, controll_config[s]["minimum_steups"]["llc"]) == -1:
-                print("Err: No enough LLC, maybe you need to change config file")
+        for s in samples:
+            rC.createCgroup("cpu,perf_event", s)
+            rC.startProcs("cpu,perf_event", s, "/home/sauron/MAGI/run_" + s)
+            time.sleep(1)
+            # initial period is 100000, give app the maximum
+            rC.cfs_quotaSet(s, controll_config[s]["maximum_steups"]["cpu"])
+            pids = rM.get_group_pids("perf_event/" + s)
+            pa_pids = ','.join([str(i) for i in pids])
+            if llcM.givePidSepLlc(pa_pids, controll_config[s]["maximum_steups"]["llc"]) == -1:
+                if llcM.givePidSepLlc(pa_pids, controll_config[s]["minimum_steups"]["llc"]) == -1:
+                    print("Err: No enough LLC, maybe you need to change config file")
+
+        # here samples are like : ["app1","app2"]
+        c = CpuController(controll_config, samples, en_data, en_tra, args.accuracy, args.sleep, args.sample_length,
+                          llcM)
+        c.run()
+    except Exception as err:
+        print(err)
+    finally:
+        print("do finally")
+        for s in s_f:
+            pids = rM.get_group_pids("perf_event/" + s)
+            for p in pids:
+                if subprocess.getstatusoutput("sudo kill -9 " + str(p))[0] != 0:
+                    print("Err: Closing test process fail, pid: " + str(p))
+            rC.deleteCgroup("cpu,perf_event", s)
+        if subprocess.getstatusoutput("sudo pqos -R")[0] != 0:
+            print("Err: Reset llc fail")
 
 
-    # here samples are like : ["app1","app2"]
-    c = CpuController(controll_config, samples, en_data, en_tra, en_det, args.accuracy, args.sleep, args.sample_length, llcM)
-    c.run()
 
