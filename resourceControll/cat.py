@@ -52,6 +52,7 @@ class llcManager:
             llcs = self.findFreeLlc(num)
             if llcs == -1:
                 print("Find free llc fail")
+                self.avaCOS.add(cos)
                 return -1
             if self.allocCache([cos], [llcs]) == -1:
                 self.avaCOS.add(cos)
@@ -179,11 +180,11 @@ class llcManager:
 
 if __name__ == '__main__':
     lm = llcManager(3)
-    cos = lm.givePidSepLlc(4,33931)
+    cos = lm.givePidSepLlc(4,"33931")
     if cos == -1:
         print("give wrong")
     lm.moreLlc(cos, 2)
-    cos2 = lm.givePidSepLlc(5,3479)
+    cos2 = lm.givePidSepLlc(5,"3479")
     lm.lessLlc(cos2,3)
     lm.recycleCOS(cos)
     lm.recycleCOS(cos2)

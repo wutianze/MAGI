@@ -3,11 +3,11 @@
 		"SLA":{
 			"ipc":0.6
 			},
-		"mininum_setups":{
+		"minimum_setups":{
 			"cpu":8,
 			"llc":1
 			},
-		"maxium_steups":{
+		"maximum_steups":{
 			"cpu":32,
 			"llc":5
 			}
@@ -16,11 +16,11 @@
 		"SLA":{
 			"ipc":0.6
 			},
-		"mininum_setups":{
+		"minimum_setups":{
 			"cpu":16,
 			"llc":5
 			},
-		"maxium_steups":{
+		"maximum_steups":{
 			"cpu":32,
 			"llc":5
 			}

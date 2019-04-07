@@ -31,7 +31,7 @@ def startProcs(subsystem, path_to_cgroup, cmd):
         print("Err: Start Process in cgroup Fail")
 
 # group is like "app1"
-def cpu_quotaSet(group,quota):
+def cfs_quotaSet(group,quota):
     if subprocess.getstatusoutput("sudo cgset -r cpu.cfs_quota_us=" + str(quota) + " " + group)[0] != 0:
         print("Err: quotaSet Fail")
         return -1
@@ -56,7 +56,7 @@ def cpusSet(value,path_to_cgroup):
 
 # group is like "app1"
 def cfs_quotaCut(group,percent):
-    if cfs_periodSet(group,int(float(rM.get_cfs_quota(group)) * float(percent))) == -1:
+    if cfs_quotaSet(group,int(float(rM.get_cfs_quota(group)) * float(percent))) == -1:
         return -1
     return 0
 

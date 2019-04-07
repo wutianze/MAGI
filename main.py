@@ -7,7 +7,7 @@ import resourceMonitor as rM
 import resourceControll as rC
 
 class CpuController:
-    def __init__(self, configFile, samples, en_data, en_train, en_detect, accuracy, sleep_interval, sample_len):
+    def __init__(self, controll_config, samples, en_data, en_train, en_detect, accuracy, sleep_interval, sample_len, llcM):
         #self.logging.basicConfig('logger.log',logging.INFO)
         #self.logger = logging.getLogger('example1')
         self.enable_data_driven = en_data
@@ -17,13 +17,12 @@ class CpuController:
         self.allGroups = samples# ["app1","app2"]
         self.sample_len = sample_len
 
-        controll_config = json.loads(open(configFile,'r').read())
         self.policies = {}
         for g in controll_config.keys():# g is just "app1", not "cpu/app1"
             self.policies[g] = po.Policy(g, self.allGroups, controll_config, accuracy)
 
         self.currentInfo = {}
-        self.llcM = rC.cat.llcManager(4)
+        self.llcM = llcM
         self.groupCOS = {}
 
         self.throttled_group = set()
@@ -132,11 +131,22 @@ if __name__ == '__main__':
     en_tra = args.enable_training != None
     samples = args.samples.strip().split(',')
 
+    controll_config = json.loads(open(args.config, 'r').read())
+    llcM = rC.cat.llcManager(4)
+
     for s in samples:
         rC.createCgroup("cpu,perf_event", s)
         rC.startProcs("cpu,perf_event", s, "sudo ./run_" + s)
+        # initial period is 100000, give app the maximum
+        rC.cfs_quotaSet(s, controll_config[s]["maximum_steups"]["cpu"])
+        pids = rM.get_group_pids("perf_event/" + s)
+        pa_pids = ','.join([str(i) for i in pids])
+        if llcM.givePidSepLlc(pa_pids, controll_config[s]["maximum_steups"]["llc"]) == -1:
+            if llcM.givePidSepLlc(pa_pids, controll_config[s]["minimum_steups"]["llc"]) == -1:
+                print("Err: No enough LLC, maybe you need to change config file")
+
 
     # here samples are like : ["app1","app2"]
-    c = CpuController(args.config, samples, en_data, en_tra, en_det, args.accuracy, args.sleep, args.sample_length)
+    c = CpuController(controll_config, samples, en_data, en_tra, en_det, args.accuracy, args.sleep, args.sample_length, llcM)
     c.run()
 
