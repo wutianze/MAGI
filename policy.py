@@ -54,7 +54,7 @@ class Policy:
             if g != self.own:
                 for tar in subTar:
                     train_X.append(infoList[g][tar])
-        train_y = float(train_X[self.own]["instructions"])/float(train_X[self.own]["cycles"])
+        train_y = float(infoList[self.own]["instructions"])/float(infoList[self.own]["cycles"])
         return train_X, train_y
 
 

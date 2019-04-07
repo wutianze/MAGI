@@ -40,6 +40,8 @@ class llcManager:
         print("No enough excessive free llc")#may do a clear up
         return -1 # mean wrong
 
+
+    # in this function, the controll part of  llc is hard to check, so we just give up checking
     def givePidSepLlc(self, pids, num):
         if len(self.avaCOS) == 0:
             print("No available COS")
@@ -47,8 +49,9 @@ class llcManager:
         else:
             cos = self.avaCOS.pop()
             if self.assoProcessCOS([pids], [cos]) == -1:
-                self.avaCOS.add(cos)
-                return -1
+                #self.avaCOS.add(cos)
+                print("Warning: assoProcessCOS fail, may not affect")
+                #return -1
             llcs = self.findFreeLlc(num)
             if llcs == -1:
                 print("Find free llc fail")
@@ -157,7 +160,6 @@ class llcManager:
             print("Err: allocCache Fail")
             return -1
         for cos, llc in zip(coses,llcs):
-
             self.cosLlc[cos] = llc
             if cos != 0:
                 self.freeLlc = self.freeLlc ^ llc
@@ -172,12 +174,12 @@ class llcManager:
         for cos,pids in zip(coses, pidss):
             cmd += "pid:" + str(cos) + "=" + str(pids) + ";"
         cmd += "\""
-        '''
+
         if subprocess.getstatusoutput(cmd)[0] != 0:
             print("Err:assoProcessCOS Fail")
             return -1
-            '''
-        print(subprocess.getstatusoutput(cmd))
+
+        #print(subprocess.getstatusoutput(cmd))
         return 0
 
         
