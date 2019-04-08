@@ -23,7 +23,6 @@ class CpuController:
 
         self.currentInfo = {}
         self.llcM = llcM
-        self.groupCOS = {}
 
         self.throttled_group = set()
 
@@ -48,7 +47,7 @@ class CpuController:
             
             # try_to_add_sample will also collect the current info of all the groups
             sample = self.try_to_add_sample()
-            for g in self.policies.keys():
+            for g in self.allGroups: # allGroup should <= self.policies.keys()y
                 self.policies[g].with_run(self.currentInfo, self.enable_training)
             self.check_cpu(sample)
 
@@ -92,13 +91,13 @@ class CpuController:
 
     def start_cpu_relax_analyst(self):
         for t in self.throttled_group:
-            if self.policies[t].controlConfig[t]["maxium_steups"]["llc"] <= self.llcM.cosLlcNum(t) or self.llcM.moreLlc(self.groupCOS[t], int((self.policies[t].controlConfig["maxium_steups"]["llc"] - self.llcM.cosLlcNum(t)) / 2) + 1) == -1:
+            if self.policies[t].controlConfig[t]["maxium_setups"]["llc"] <= self.llcM.cosLlcNum(t) or self.llcM.moreLlc(llcM.groupCOS[t], int((self.policies[t].controlConfig["maxium_setups"]["llc"] - self.llcM.cosLlcNum(t)) / 2) + 1) == -1:
                 now_quota = rM.get_cfs_quota(t)
-                if self.policies[t].controlConfig[t]["maxium_steups"]["cpu"] > now_quota * 1.25:
+                if self.policies[t].controlConfig[t]["maxium_setups"]["cpu"] > now_quota * 1.25:
                     if rC.cfs_quotaCut(t, 1.25) == -1:
                         return -1
                 else:
-                    if rC.cfs_quotaCut(t,float(self.policies[t].controlConfig[t]["maxium_steups"]["cpu"] / now_quota)) == -1:
+                    if rC.cfs_quotaCut(t,float(self.policies[t].controlConfig[t]["maxium_setups"]["cpu"] / now_quota)) == -1:
                         return -1
 
         return 0
@@ -107,9 +106,9 @@ class CpuController:
     def start_cpu_throttle_analyst(self, group):
         policy = self.policies[group]
         if self.enable_data_driven and policy.estimator.workable():
-            policy.throttle_target_select_setup(self.groupCOS, self.throttled_group, self.llcM)
+            policy.throttle_target_select_setup(self.throttled_group, self.llcM)
         else:
-            if policy.rule_update(self.groupCOS, self.throttled_group, self.llcM) == -1:
+            if policy.rule_update(self.throttled_group, self.llcM) == -1:
                 print("Err: toplev_update Fail")
                 return -1
         return 0
@@ -141,11 +140,10 @@ if __name__ == '__main__':
             rC.startProcs("cpu,perf_event", s, "/home/sauron/MAGI/run_" + s)
             time.sleep(1)
             # initial period is 100000, give app the maximum
-            rC.cfs_quotaSet(s, controll_config[s]["maximum_steups"]["cpu"])
-            pids = rM.get_group_pids("perf_event/" + s)
-            pa_pids = ','.join([str(i) for i in pids])
-            if llcM.givePidSepLlc(pa_pids, controll_config[s]["maximum_steups"]["llc"]) == -1:
-                if llcM.givePidSepLlc(pa_pids, controll_config[s]["minimum_steups"]["llc"]) == -1:
+            rC.cfs_quotaSet(s, controll_config[s]["maximum_setups"]["cpu"])
+            pid = rM.get_group_pid("perf_event/" + s, "run_" + s)
+            if llcM.givePidSepLlc([pid], controll_config[s]["maximum_setups"]["llc"], s) == -1:
+                if llcM.givePidSepLlc([pid], controll_config[s]["minimum_setups"]["llc"], s) == -1:
                     print("Err: No enough LLC, maybe you need to change config file")
 
         # here samples are like : ["app1","app2"]
@@ -157,10 +155,10 @@ if __name__ == '__main__':
     finally:
         print("do finally")
         for s in s_f:
-            pids = rM.get_group_pids("perf_event/" + s)
-            for p in pids:
-                if subprocess.getstatusoutput("sudo kill -9 " + str(p))[0] != 0:
-                    print("Err: Closing test process fail, pid: " + str(p))
+            pids = subprocess.getoutput("sudo cat /sys/fs/cgroup/perf_event/" + s + "/cgroup.procs").strip().split()
+            for pid in pids:
+                if subprocess.getstatusoutput("sudo kill -9 " + str(pid))[0] != 0:
+                    print("Err: Closing test process fail, pid: " + str(pid))
             rC.deleteCgroup("cpu,perf_event", s)
         if subprocess.getstatusoutput("sudo pqos -R")[0] != 0:
             print("Err: Reset llc fail")

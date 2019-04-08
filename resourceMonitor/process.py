@@ -4,16 +4,8 @@ import resourceMonitor.cgroup as cg
 
 # group is like "cpu/app1"
 def getGroupStart(group):
-    pids = cg.get_group_pids(group)
-    res = time.time()
-    for p in pids:
-        try:
-            tmp = psutil.Process(p).create_time()
-            if tmp < res:
-                res = tmp
-        except:
-            continue
-    return res
+    pid = cg.get_group_pid(group, group.split('/')[-1])
+    return psutil.Process(pid).create_time()
 
 # get the group which co-located with aim for the most of time
 # group is like "cpu/app1", allG should be ["cpu/app1", "cpu/perf_event"]

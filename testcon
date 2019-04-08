@@ -7,7 +7,7 @@
 			"cpu":10000,
 			"llc":1
 			},
-		"maximum_steups":{
+		"maximum_setups":{
 			"cpu":50000,
 			"llc":5
 			}
@@ -20,7 +20,7 @@
 			"cpu":8,
 			"llc":1
 			},
-		"maximum_steups":{
+		"maximum_setups":{
 			"cpu":32,
 			"llc":5
 			}
@@ -33,7 +33,7 @@
 			"cpu":16,
 			"llc":5
 			},
-		"maximum_steups":{
+		"maximum_setups":{
 			"cpu":32,
 			"llc":5
 			}

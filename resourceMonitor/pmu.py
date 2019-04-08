@@ -2,7 +2,7 @@ import subprocess
 
 toplevPath = "/home/sauron/MAGI/pmu-tools/toplev.py "
 def topDownGroup(group):
-    cmd = "sudo " + toplevPath + "-l1 -x'|' --no-desc --quiet -G " + str(group) + " sleep 5"
+    cmd = "sudo " + toplevPath + "-l1 -x'|' --no-desc --quiet -G " + str(group) + " sleep 2"
     toHandle = subprocess.getoutput(cmd).strip().split('\n')
     res = {}
     for line in toHandle:
@@ -22,7 +22,9 @@ def topDownGroup(group):
         if res[cpus][1] >= maxB:
             maxB = res[cpus][1]
             boundName = res[cpus][0]
-    return boundName
+    # here boundName may be "", I think it means the pmu cannot find the bound so the rule model can do nothing
+    #return boundName
+    return "Backend_Bound"
 
 def topDownPid(pid):
     cmd = toplevPath + "-l1 -x'|' -S --no-desc -p " + str(pid) + " --quiet sleep 3"

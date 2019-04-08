@@ -10,6 +10,7 @@ class llcManager:
         self.cosLlc = {}
         self.cosLlc[0] = ALLLLC
         self.avaCOS = set()
+        self.groupCOS = {}
         for i in range(numCOS):
             self.avaCOS.add(i+1)
 
@@ -42,13 +43,14 @@ class llcManager:
 
 
     # in this function, the controll part of  llc is hard to check, so we just give up checking
-    def givePidSepLlc(self, pids, num):
+    # pids is a list,groupName is like "app1"
+    def givePidSepLlc(self, pids, num, groupName):
         if len(self.avaCOS) == 0:
             print("No available COS")
             return -1
         else:
             cos = self.avaCOS.pop()
-            if self.assoProcessCOS([pids], [cos]) == -1:
+            if self.assoProcessCOS(pids, [cos]) == -1:
                 #self.avaCOS.add(cos)
                 print("Warning: assoProcessCOS fail, may not affect")
                 #return -1
@@ -60,6 +62,8 @@ class llcManager:
             if self.allocCache([cos], [llcs]) == -1:
                 self.avaCOS.add(cos)
                 return -1
+            if groupName != "":
+                self.groupCOS[groupName] = cos
             return cos
 
     def tryCombineFreeCOS0(self):
@@ -82,6 +86,7 @@ class llcManager:
         return 0
 
     # recycleCOS should be invoked after the pid moved to another COS or it just finishes
+    # it doesn't do pqos op
     def recycleCOS(self,cos):# num can be all
         #if self.allocCache(coslist, str(ALLLLC)) == -1:
         #    return -1
@@ -152,7 +157,7 @@ class llcManager:
     # both pqos -e and pqos -I -e can be used,llcs must be str !!
     # ex:"llc:1=0x000f;llc:2=0x0ff0"
     def allocCache(self, coses, llcs):
-        cmd = "sudo pqos -e \""
+        cmd = "sudo pqos -I -e \""
         for cos, llc in zip(coses,llcs):
             cmd += "llc:" + str(cos) + "=" + str(llc) + ";"
         cmd += "\""
@@ -169,6 +174,8 @@ class llcManager:
                     return -1
         return 0
 
+
+# although one pid is not exist , the other can still be associated correctly
     def assoProcessCOS(self, pidss, coses):
         cmd = "sudo pqos -I -a \""
         for cos,pids in zip(coses, pidss):
@@ -186,11 +193,11 @@ class llcManager:
 
 if __name__ == '__main__':
     lm = llcManager(3)
-    cos = lm.givePidSepLlc("33931",4)
+    cos = lm.givePidSepLlc("33931",4,"")
     if cos == -1:
         print("give wrong")
     lm.moreLlc(cos, 2)
-    cos2 = lm.givePidSepLlc("3479",5)
+    cos2 = lm.givePidSepLlc("3479",5,"")
     lm.lessLlc(cos2,3)
     lm.recycleCOS(cos)
     lm.recycleCOS(cos2)
