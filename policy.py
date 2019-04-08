@@ -124,6 +124,9 @@ class Policy:
 
 
     def set_throttle_setup(self, badGroup, throttled_group, llcM):
+        if badGroup == "":
+            print("Warining: Single process? Just Ignore")
+            return 0
         curGI = self.currentInfo[self.own]
         # memory-bound
         if float(curGI["instructions"]) / float(curGI["cycles"]) < RULEIPCBOUND and float(
@@ -195,7 +198,10 @@ class Policy:
                         pa_groups = []
                         for tg in self.groups:
                             pa_groups.append("perf_event/" + tg)
-                        badGroup = rM.findGroupConsumeMostLlc(pa_groups, self.own).split('/')[-1]
+                        badGroup = rM.findGroupConsumeMostLlc(pa_groups,"perf_event/" + self.own).split('/')[-1]
+                        if badGroup == "":
+                            print("Warining: Single process? Just Ignore")
+                            return 0
                         if llcM.cosLlcNum(llcM.groupCOS[badGroup]) <= self.controlConfig[badGroup]["minimum_setups"]["llc"] or llcM.lessLlc(llcM.groupCOS[badGroup], int((llcM.cosLlcNum(llcM.groupCOS[badGroup])- self.controlConfig[badGroup]["minimum_setups"]["llc"]) / 2) + 1) == -1:
                             now_quota = rM.get_cfs_quota(badGroup)
                             if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
@@ -209,7 +215,10 @@ class Policy:
                     pa_groups = []
                     for tg in self.groups:
                         pa_groups.append("perf_event/" + tg)
-                    badGroup = rM.findGroupConsumeMostMbw(pa_groups,self.own).split('/')[-1]
+                    badGroup = rM.findGroupConsumeMostMbw(pa_groups,"perf_event/" + self.own).split('/')[-1]
+                    if badGroup == "":
+                        print("Warining: Single process? Just Ignore")
+                        return 0
                     now_quota = rM.get_cfs_quota(badGroup)
                     if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
                         if rC.cfs_quotaCut(badGroup, 0.8) == -1:
@@ -224,6 +233,9 @@ class Policy:
                 for g in self.groups:
                     detail_groups.append("perf_event/" + g)
                 badGroup = rM.getCoGroup("perf_event/" + self.own, detail_groups)# change the input to "cpu/app1" style
+                if badGroup == "":
+                    print("Warining: Single process? Just Ignore")
+                    return 0
                 now_quota = rM.get_cfs_quota(badGroup)
                 if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
                     if rC.cfs_quotaCut(badGroup, 0.8) == -1:
@@ -237,6 +249,9 @@ class Policy:
             for g in self.groups:
                 detail_groups.append("perf_event/" + g)
             badGroup = rM.getCoGroup("perf_event/" + self.own,detail_groups)# change the input to "cpu/app1" style
+            if badGroup == "":
+                print("Warining: Single process? Just Ignore")
+                return 0
             now_quota = rM.get_cfs_quota(badGroup)
             if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
                 if rC.cfs_quotaCut(badGroup, 0.8) == -1:
