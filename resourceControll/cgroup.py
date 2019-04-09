@@ -26,6 +26,7 @@ def addProcs(subsystem,path_to_cgroup,pid):
         print("Err: Add Process Fail")
 
 def new_app(subsystem, path_to_cgroup, cmd):
+    #print()
     if subprocess.getstatusoutput("sudo cgexec -g " + subsystem + ":" + path_to_cgroup + " " + cmd)[0] != 0:
         print("Err: Start or Running Process in cgroup Fail")
 
@@ -56,8 +57,16 @@ def cfs_periodSet(group,period):
 
 # path_to_cgroup is like "app1"
 def cpusSet(value,path_to_cgroup):
-    if subprocess.getstatusoutput("sudo cgset -r cpuset.cpus=" + str(value) + path_to_cgroup)[0] != 0:
+    if subprocess.getstatusoutput("sudo cgset -r cpuset.cpus=" + str(value) + " " + path_to_cgroup)[0] != 0:
         print("Err:set cpus Fail")
+        return -1
+    return 0
+
+
+# path_to_cgroup is like "app1"
+def cpusetMemsSet(value, path_to_cgroup):
+    if subprocess.getstatusoutput("sudo cgset -r cpuset.mems=" + str(value) + " " + path_to_cgroup)[0] != 0:
+        print("Err:set cpuset.mems Fail")
         return -1
     return 0
 

@@ -50,7 +50,7 @@ class llcManager:
             return -1
         else:
             cos = self.avaCOS.pop()
-            if self.assoProcessCOS(pids, [cos]) == -1:
+            if self.assoProcessCOS([pids], [cos]) == -1:
                 #self.avaCOS.add(cos)
                 print("Warning: assoProcessCOS fail, may not affect")
                 #return -1

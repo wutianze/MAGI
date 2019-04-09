@@ -195,10 +195,7 @@ class Policy:
                 if float(rM.cat.getCgroupsMbw(["perf_event/" + self.own])["perf_event/" + self.own])/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
                     if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"]["llc"] or llcM.moreLlc(llcM.groupCOS[self.own], int((self.controlConfig[self.own]["maximum_setups"]["llc"] - llcM.cosLlcNum(llcM.groupCOS[self.own])) / 2) + 1) == -1:
-                        pa_groups = []
-                        for tg in self.groups:
-                            pa_groups.append("perf_event/" + tg)
-                        badGroup = rM.findGroupConsumeMostLlc(pa_groups,"perf_event/" + self.own).split('/')[-1]
+                        badGroup = rM.findGroupConsumeMostLlc(self.groups,self.own)
                         if badGroup == "":
                             print("Warining: Single process? Just Ignore")
                             return 0
@@ -212,10 +209,7 @@ class Policy:
                                     return -1
                 # mem-bw-bound
                 else:
-                    pa_groups = []
-                    for tg in self.groups:
-                        pa_groups.append("perf_event/" + tg)
-                    badGroup = rM.findGroupConsumeMostMbw(pa_groups,"perf_event/" + self.own).split('/')[-1]
+                    badGroup = rM.findGroupConsumeMostMbl(self.groups,self.own)
                     if badGroup == "":
                         print("Warining: Single process? Just Ignore")
                         return 0

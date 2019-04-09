@@ -6,15 +6,45 @@ import resourceMonitor as rM
 def getCpuInfo(pid):
     return subprocess.getoutput('sudo pqos -t1 -I -p all:'+str(pid))
 
+# cores like [0,1,2]
+def getCoresLlc(cores):
+    toHandle = subprocess.getoutput('sudo pqos -t 1 -m llc:' + ','.join([str(i) for i in cores])).strip().split('\n')
+    res = []
+    start = len(cores) + 7
+    for i in range(len(cores)):
+        res.append(toHandle[i + start].split()[-1])
+    return res
 
-def getIpc(pid):
-    return 0.3
+# cores like [0,1,2]
+def getCoresMbl(cores):
+    toHandle = subprocess.getoutput('sudo pqos -t 1 -m mbl:' + ','.join([str(i) for i in cores])).strip().split('\n')
+    res = []
+    start = len(cores) + 7
+    for i in range(len(cores)):
+        res.append(toHandle[i + start].split()[-1])
+    return res
 
+# group is like app1
+def getGroupsSumLlc(group):
+    cores = rM.get_group_core(group)
+    if isinstance(cores,str):
+        return -1
+    llcs = getCoresLlc(cores)
+    res = 0.0
+    for l in llcs:
+        res += float(l)
+    return res
 
-# get mem-bw of a single process
-def getPidMbw(pid):
-    forHandle = subprocess.getoutput('sudo pqos -t 1 -I -p mbl:' + str(pid)).strip()
-    return 2.2
+# group is like app1
+def getGroupsSumMbl(group):
+    cores = rM.get_group_core(group)
+    if isinstance(cores,str):
+        return -1
+    llcs = getCoresMbl(cores)
+    res = 0.0
+    for l in llcs:
+        res += float(l)
+    return res
 
 # groups are like ["cpu/app1","perf_event/app2"]
 def getCgroupsMbw(groups):
@@ -32,6 +62,7 @@ def getCgroupsMbw(groups):
         lineI += 1
 
     return gP
+
 
 # groups are like ["cpu/app1","perf_event/app2"]
 def getCgroupsLlc(groups):
@@ -51,29 +82,34 @@ def getCgroupsLlc(groups):
     return gP
 
 
-#find the most except ex, groups should be ["cpu/app1",..]
+#find the most except ex, groups should be ["app1",..]
 def findGroupConsumeMostLlc(groups,ex):
-    data = getCgroupsLlc(groups)
     res = ""
-    mostL = 0.0
-    for key in data.keys():
-        if data[key] >= mostL and key != ex:
-            mostL = data[key]
-            res = key
+    mostLlc = 0.0
+    for g in groups:
+        #if g == ex:
+         #   continue
+        tmp = getGroupsSumLlc(g)
+        if tmp >= mostLlc:
+            res = g
+            mostLlc = tmp
     return res
 
 #groups should be ["cpu/app1",...]
-def findGroupConsumeMostMbw(groups,ex):
-    data = getCgroupsMbw(groups)
+def findGroupConsumeMostMbl(groups,ex):
     res = ""
-    mostL = 0.0
-    for key in data.keys():
-        if data[key] >= mostL and key != ex:
-            mostL = data[key]
-            res = key
+    mostMbl = 0.0
+    for g in groups:
+        if g == ex:
+            continue
+        tmp = getGroupsSumMbl(g)
+        if tmp >= mostMbl:
+            res = g
+            mostMbl = tmp
     return res
 
 
 if __name__ == '__main__':
-    grps = ["/cpu/app1","/cpu/app2"]
-    findGroupConsumeMostLlc(grps,"")
+    #grps = ["/cpu/app1","/cpu/app2"]
+    #findGroupConsumeMostLlc(grps,"")
+    getCoresMbl([3,4])

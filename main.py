@@ -7,6 +7,8 @@ import resourceMonitor as rM
 import resourceControll as rC
 import subprocess
 
+avaCpus = {3,4,5}
+
 class CpuController:
     def __init__(self, controll_config, samples, en_data, en_train, accuracy, sleep_interval, sample_len, llcM):
         #self.logging.basicConfig('logger.log',logging.INFO)
@@ -136,14 +138,17 @@ if __name__ == '__main__':
         llcM = rC.cat.llcManager(4)
 
         for s in samples:
-            rC.createCgroup("cpu,perf_event", s)
-            rC.startProcs("cpu,perf_event", s, "/home/sauron/MAGI/run_" + s)
+            rC.createCgroup("cpu,perf_event,cpuset", s)
+            rC.cpusSet(avaCpus.pop(), s)
+            rC.cpusetMemsSet(0, s)
+            rC.startProcs("cpu,perf_event,cpuset", s, "/home/sauron/MAGI/run_" + s)
             time.sleep(1)
             # initial period is 100000, give app the maximum
             rC.cfs_quotaSet(s, controll_config[s]["maximum_setups"]["cpu"])
-            pid = rM.get_group_pid("perf_event/" + s, "run_" + s)
-            if llcM.givePidSepLlc([pid], controll_config[s]["maximum_setups"]["llc"], s) == -1:
-                if llcM.givePidSepLlc([pid], controll_config[s]["minimum_setups"]["llc"], s) == -1:
+            pids = rM.get_group_pids("perf_event/" + s)
+            pa_pids = ','.join([str(i) for i in pids])
+            if llcM.givePidSepLlc(pa_pids, controll_config[s]["maximum_setups"]["llc"], s) == -1:
+                if llcM.givePidSepLlc(pa_pids, controll_config[s]["minimum_setups"]["llc"], s) == -1:
                     print("Err: No enough LLC, maybe you need to change config file")
 
         # here samples are like : ["app1","app2"]
@@ -159,7 +164,7 @@ if __name__ == '__main__':
             for pid in pids:
                 if subprocess.getstatusoutput("sudo kill -9 " + str(pid))[0] != 0:
                     print("Err: Closing test process fail, pid: " + str(pid))
-            rC.deleteCgroup("cpu,perf_event", s)
+            rC.deleteCgroup("cpu,perf_event,cpuset", s)
         if subprocess.getstatusoutput("sudo pqos -R")[0] != 0:
             print("Err: Reset llc fail")
 
