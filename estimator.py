@@ -65,6 +65,7 @@ class Estimator:
         X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, random_state=random.randint(0,10))
         self.nn.partial_fit(X_train,y_train)
         self.curr_score = self.nn.score(X_test,y_test)
+        print("curr_score:" + str(self.curr_score))
         #self.curr_score = model_selection.cross_val_score(self.model,X_train,Y_train,cv=5,scoring='accuracy').mean()
 
 
@@ -76,7 +77,9 @@ if __name__ == '__main__':
     loaded_data = datasets.load_boston()
     data_x = loaded_data.data
     data_y = loaded_data.target
+    print(data_y)
     e = Estimator(0.3)
+    e.scaler_init(data_x)
 
     newX, newy = e.pre_data(data_x, data_y)
 

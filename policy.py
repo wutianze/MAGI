@@ -4,7 +4,7 @@ import resourceMonitor as rM
 import numpy as np
 import math
 
-TRAINCIRCLE = 100
+TRAINCIRCLE = 200
 
 RULEIPCBOUND = 1
 RULEMPKIBOUND = 5
@@ -33,16 +33,17 @@ class Policy:
         self.roundHistoryX.append(X)
         self.roundHistoryy.append(y)
         self.count += 1
+        #print(self.count)
         if self.count == TRAINCIRCLE:
             self.estimator.scaler_init(self.roundHistoryX)
             train_X, train_y = self.estimator.pre_data(self.roundHistoryX, self.roundHistoryy)
-            self.historyX += train_X
-            self.historyy += train_y
+            self.historyX += train_X.tolist()
+            self.historyy += train_y.tolist()
             self.roundHistoryX.clear()
             self.roundHistoryy.clear()# can store to local disk for future use
             self.count = 0
             if train_enable:
-                self.estimator.train(train_X, train_y)
+                self.estimator.train(np.array(self.historyX), np.array(self.historyy))
 
     def generate_one_train_data(self, infoList):
         train_X = []
@@ -54,7 +55,7 @@ class Policy:
             if g != self.own:
                 for tar in subTar:
                     train_X.append(infoList[g][tar])
-        train_y = float(infoList[self.own]["instructions"])/float(infoList[self.own]["cycles"])
+        train_y = float(infoList[self.own]["ipc"])
         return train_X, train_y
 
 
@@ -129,7 +130,7 @@ class Policy:
             return 0
         curGI = self.currentInfo[self.own]
         # memory-bound
-        if float(curGI["instructions"]) / float(curGI["cycles"]) < RULEIPCBOUND and float(
+        if float(curGI["ipc"]) < RULEIPCBOUND and float(
                 curGI["cache-misses"]) * 1000.0 / float(curGI["instructions"]) > RULEMPKIBOUND:
             # llc-bound
             if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"]["llc"] or llcM.moreLlc(
@@ -190,7 +191,7 @@ class Policy:
         badGroup = ""
         if boundPart == "Backend_Bound":
             # memory-bound
-            if float(curGI["instructions"])/float(curGI["cycles"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
+            if float(curGI["ipc"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
                 # llc-bound
                 if float(rM.cat.getGroupsSumMbl(self.own))/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
@@ -256,8 +257,8 @@ class Policy:
                     return -1
 
         else:
-            print("Err: Rule Model can do Nothing more")
-            return -1
+            print("Warning: Rule Model can do Nothing more")
+            return 0
         if badGroup != "":
             throttled_group.add(badGroup)
         return 0

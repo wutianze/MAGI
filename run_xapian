@@ -1,0 +1,2 @@
+#! /bin/bash
+/home/sauron/tailbench-v0.9/xapian/run_xapian_server

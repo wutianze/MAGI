@@ -6,8 +6,14 @@ import policy as po
 import resourceMonitor as rM
 import resourceControll as rC
 import subprocess
+from multiprocessing import Process
 
 avaCpus = {1,0}
+def new_help(cmd):
+    #print()
+    if subprocess.getstatusoutput("sudo " + cmd)[0] != 0:
+        print("Err: Start or Running help shell Fail")
+
 
 class CpuController:
     def __init__(self, controll_config, samples, en_data, en_train, accuracy, sleep_interval, sample_len, llcM):
@@ -31,11 +37,14 @@ class CpuController:
 
     # try to add the groups who break SLA
     def try_to_add_sample(self):
-        self.currentInfo = rM.perf.getAllInfo(self.allGroups, self.sample_len)
+        tmp_info = None
+        while tmp_info == None:
+             tmp_info = rM.perf.getAllInfo(self.allGroups, self.sample_len)
+        self.currentInfo = tmp_info
         samples = []
         for group in self.currentInfo.keys():
             # now the sla depends on ipc=instructions/cycles
-            if float(self.currentInfo[group]["instructions"])/float(self.currentInfo[group]["cycles"]) < float(self.policies[group].controlConfig[group]["SLA"]["ipc"]):
+            if float(self.currentInfo[group]["ipc"]) < float(self.policies[group].controlConfig[group]["SLA"]["ipc"]):
                 samples.append(group)
         #TODO:sava the currentInfo for future use
         return samples
@@ -75,7 +84,7 @@ class CpuController:
         least_ipc = 9999.9
         least_group = ""
         for group in sample:
-            tmpIpc = float(self.currentInfo[group]["instructions"])/float(self.currentInfo[group]["cycles"])
+            tmpIpc = float(self.currentInfo[group]["ipc"])
             if tmpIpc < least_ipc:
                 least_ipc = tmpIpc
                 least_group = group
@@ -124,10 +133,10 @@ if __name__ == '__main__':
         parser.add_argument('--enable-data-driven')
         parser.add_argument('--samples', type=str, default="",
                             help="the groups needed to control")  # here the groups shouldn't be full path,ex: app1 not /cpu/app1
-        parser.add_argument('--accuracy', type=float, default=0.7, help="the threshold of model's accuracy")
-        parser.add_argument('--sample-length', type=int, default=2,
+        parser.add_argument('--accuracy', type=float, default=0.3, help="the threshold of model's accuracy")
+        parser.add_argument('--sample-length', type=int, default=4,
                             help="how many seconds the sampling measurement should cover")
-        parser.add_argument('--sleep', type=int, default=4, help="pause sleep seconds between each round")
+        parser.add_argument('--sleep', type=int, default=1, help="pause sleep seconds between each round")
         args = parser.parse_args()
         en_data = args.enable_data_driven != None
         en_tra = args.enable_training != None
@@ -143,6 +152,11 @@ if __name__ == '__main__':
             rC.cpusetMemsSet(0, s)
             rC.startProcs("cpu,perf_event,cpuset", s, "/home/sauron/MAGI/run_" + s)
             time.sleep(1)
+            if s == "xapian":
+                cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
+                newP = Process(target=new_help, args=cli_cmd)
+                newP.start()
+
             # initial period is 100000, give app the maximum
             rC.cfs_quotaSet(s, controll_config[s]["maximum_setups"]["cpu"])
             pids = rM.get_group_pids("perf_event/" + s)

@@ -49,33 +49,41 @@ def getInfoList(configs,time):
     return res
     #return subprocess.getoutput(cmd_str).strip().split()
     '''
+def getInfo(group, sample_len):
+    #print("getAllInfo start")
+    cmd_str = "sudo " + perfPath + " stat -a -x'|'"
+    cmd_str += " -e "
+    cmd_str += ','.join(avaTar)
+    cmd_str += " -G " + group
+    #print(cmd_str)
+    forHandle = subprocess.getoutput(cmd_str + " sleep " + str(sample_len)).strip().split('\n')
+    #print(forHandle)
+    index = 0
+    ipc = 0
+    groupData = {}
+    for event in avaTar:
+        if event in fromEvent.keys():
+            event = fromEvent[event]
+        val = forHandle[index].strip().split('|')[0]
+        if val == "<not counted>":  # if the app is not running, events like instructions may be not counted
+            # val = 1.0
+            return None
+        if event == "instructions":
+            ipc = forHandle[index].strip().split('|')[6]
+        index = index + 1
+        groupData[event] = float(val)
+    groupData["ipc"] = ipc
+    return groupData
+
 
 # groups is like ["app1","app2"]
 def getAllInfo(groups, sample_len):
-    print("getAllInfo start")
-    cmd_str = "sudo " + perfPath + " stat -a -x'|'"
-    for group in groups:
-        cmd_str += " -e "
-        for event in avaTar:
-            cmd_str += event + ','
-        cmd_str = cmd_str[0:(len(cmd_str)-1)]#delete the last ','
-        cmd_str += " -G " + group
-    print(cmd_str)
-    forHandle = subprocess.getoutput(cmd_str + " sleep " + str(sample_len)).strip().split('\n')
-    print(forHandle)
     res = {}
-    index = 0
     for group in groups:
-        groupData = {}
-        for event in avaTar:
-            if event in fromEvent.keys():
-                event = fromEvent[event]
-            val = forHandle[index].strip().split('|')[0]
-            if val == "<not counted>":# if the app is not running, events like instructions may be not counted
-                val = 0
-            index = index + 1
-            groupData[event] = val
-        res[group] = groupData
+        tmpI = getInfo(group, sample_len)
+        if  tmpI == None:
+            return None
+        res[group] = tmpI
     return res
 
 if __name__ == '__main__':

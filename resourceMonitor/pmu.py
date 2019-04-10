@@ -8,7 +8,7 @@ def topDownGroup(group):
     for line in toHandle:
         if(line[0] == 'S'): #!! need to adapt to differnt machines
             lineS = line.split('|')
-            print(lineS)
+            #print(lineS)
             if lineS[0] in res.keys():
                 if float(lineS[7]) != 100 and res[lineS[0]][1] < float(lineS[2]):# 100 means the percent of time counter used,if 100 we ignore it because the app may not run on that CPU
                     res[lineS[0]] = (lineS[1],float(lineS[2]))

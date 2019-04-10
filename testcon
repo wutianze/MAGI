@@ -1,7 +1,7 @@
 {
 "top":{
 		"SLA":{
-			"ipc":0.6
+			"ipc":0.2
 			},
 		"minimum_setups":{
 			"cpu":10000,
@@ -17,11 +17,11 @@
 			"ipc":0.6
 			},
 		"minimum_setups":{
-			"cpu":8,
+			"cpu":10000,
 			"llc":1
 			},
 		"maximum_setups":{
-			"cpu":32,
+			"cpu":50000,
 			"llc":5
 			}
 		},
