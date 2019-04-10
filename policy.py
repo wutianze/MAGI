@@ -192,7 +192,7 @@ class Policy:
             # memory-bound
             if float(curGI["instructions"])/float(curGI["cycles"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
                 # llc-bound
-                if float(rM.cat.getCgroupsMbw(["perf_event/" + self.own])["perf_event/" + self.own])/1024.0 < RULEMEMBWBOUND:
+                if float(rM.cat.getGroupsSumMbl(self.own))/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
                     if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"]["llc"] or llcM.moreLlc(llcM.groupCOS[self.own], int((self.controlConfig[self.own]["maximum_setups"]["llc"] - llcM.cosLlcNum(llcM.groupCOS[self.own])) / 2) + 1) == -1:
                         badGroup = rM.findGroupConsumeMostLlc(self.groups,self.own)

@@ -9,19 +9,23 @@ def getCpuInfo(pid):
 # cores like [0,1,2]
 def getCoresLlc(cores):
     toHandle = subprocess.getoutput('sudo pqos -t 1 -m llc:' + ','.join([str(i) for i in cores])).strip().split('\n')
-    res = []
-    start = len(cores) + 7
-    for i in range(len(cores)):
-        res.append(toHandle[i + start].split()[-1])
+    res = {}
+
+    for line in toHandle:
+        con = line.split()
+        if str(con[0]).isdigit():
+            res[int(con[0])] = float(con[-1])
     return res
 
 # cores like [0,1,2]
 def getCoresMbl(cores):
     toHandle = subprocess.getoutput('sudo pqos -t 1 -m mbl:' + ','.join([str(i) for i in cores])).strip().split('\n')
-    res = []
-    start = len(cores) + 7
-    for i in range(len(cores)):
-        res.append(toHandle[i + start].split()[-1])
+    res = {}
+
+    for line in toHandle:
+        con = line.split()
+        if str(con[0]).isdigit():
+            res[int(con[0])] = float(con[-1])
     return res
 
 # group is like app1
@@ -31,8 +35,8 @@ def getGroupsSumLlc(group):
         return -1
     llcs = getCoresLlc(cores)
     res = 0.0
-    for l in llcs:
-        res += float(l)
+    for k in llcs.keys():
+        res += float(llcs[k])
     return res
 
 # group is like app1
@@ -40,13 +44,15 @@ def getGroupsSumMbl(group):
     cores = rM.get_group_core(group)
     if isinstance(cores,str):
         return -1
-    llcs = getCoresMbl(cores)
+    mbls = getCoresMbl(cores)
     res = 0.0
-    for l in llcs:
-        res += float(l)
+    for k in mbls.keys():
+        res += float(mbls[k])
     return res
 
+'''
 # groups are like ["cpu/app1","perf_event/app2"]
+# ! better not use
 def getCgroupsMbw(groups):
     gP = {}
     pidsForJoin = []
@@ -65,6 +71,7 @@ def getCgroupsMbw(groups):
 
 
 # groups are like ["cpu/app1","perf_event/app2"]
+# ! better not use 
 def getCgroupsLlc(groups):
     gP = {}
     pidsForJoin = []
@@ -80,22 +87,22 @@ def getCgroupsLlc(groups):
         gP[group] = float(values[2])
         lineI += 1
     return gP
-
+'''
 
 #find the most except ex, groups should be ["app1",..]
 def findGroupConsumeMostLlc(groups,ex):
     res = ""
     mostLlc = 0.0
     for g in groups:
-        #if g == ex:
-         #   continue
+        if g == ex:
+            continue
         tmp = getGroupsSumLlc(g)
         if tmp >= mostLlc:
             res = g
             mostLlc = tmp
     return res
 
-#groups should be ["cpu/app1",...]
+#groups should be ["app1",...]
 def findGroupConsumeMostMbl(groups,ex):
     res = ""
     mostMbl = 0.0

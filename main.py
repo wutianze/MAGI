@@ -7,7 +7,7 @@ import resourceMonitor as rM
 import resourceControll as rC
 import subprocess
 
-avaCpus = {3,4,5}
+avaCpus = {1,0}
 
 class CpuController:
     def __init__(self, controll_config, samples, en_data, en_train, accuracy, sleep_interval, sample_len, llcM):
