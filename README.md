@@ -26,6 +26,9 @@
   - shore
     同样建议先进入shore来安装，需要安装的可能有automake,autoconfig,glib2-devel等库，且centos会出现glibconfig.h找不到的情况，需要将/usr/lib64/glib-2/include/glibconfig.h拷贝到/usr/include/glib-2/中
 
-# xapian用法
+# xapian usage
 控制运行时间：有两个变量TBENCH_MAXREQS和-r，client会一直运行发送请求直到server发送finish信号，而server就是到TBENCH_MAXREQS+TBENCH_WARMUP会发信号。server会在所有client都结束后自动结束，而-r的设置相当于另外给了一个server处理请求的上限，到达这个值即使还有client那server也还是会结束。
 本次实验直接将-r设置成无穷大即可。
+
+# problems found now (* for not solved)
+  - *测试应用的资源不能给太少，太少的话容易直接挂掉。但另一种可能是llc调节代码有问题或者说频繁调节容易把程序搞崩。
