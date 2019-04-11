@@ -130,41 +130,49 @@ class Policy:
         # memory-bound
         if float(curGI["ipc"]) < RULEIPCBOUND and float(
                 curGI["cache-misses"]) * 1000.0 / float(curGI["instructions"]) > RULEMPKIBOUND:
-            # llc-bound
-            if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"]["llc"] or llcM.moreLlc(
-                    llcM.groupCOS[self.own], int((self.controlConfig[self.own]["maximum_setups"]["llc"] - llcM.cosLlcNum(llcM.groupCOS[
-                            self.own])) / 2) + 1) == -1:
-                if llcM.cosLlcNum(llcM.groupCOS[badGroup]) <= self.controlConfig[badGroup]["minimum_setups"]["llc"] or llcM.lessLlc(
-                        llcM.groupCOS[badGroup], int((llcM.cosLlcNum(llcM.groupCOS[badGroup]) -
-                                                 self.controlConfig[badGroup]["minimum_setups"]["llc"]) / 2) + 1) == -1:
-                    now_quota = rM.get_cfs_quota(badGroup)
-                    if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
-                        if rC.cfs_quotaCut(badGroup, 0.8) == -1:
-                            return -1
+            if float(rM.cat.getGroupsSumMbl(self.own)) / 1024.0 < RULEMEMBWBOUND:
+                # llc-bound
+                if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"][
+                    "llc"] or llcM.moreLlc(
+                        llcM.groupCOS[self.own],
+                        int((self.controlConfig[self.own]["maximum_setups"]["llc"] - llcM.cosLlcNum(llcM.groupCOS[
+                                                                                                        self.own])) / 2) + 1) == -1:
+                    if llcM.cosLlcNum(llcM.groupCOS[badGroup]) <= self.controlConfig[badGroup]["minimum_setups"][
+                        "llc"] or llcM.lessLlc(
+                            llcM.groupCOS[badGroup], int((llcM.cosLlcNum(llcM.groupCOS[badGroup]) -
+                                                          self.controlConfig[badGroup]["minimum_setups"][
+                                                              "llc"]) / 2) + 1) == -1:
+                        now_quota = rM.get_cfs_quota(badGroup)
+                        if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
+                            if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                                return -1
+                            else:
+                                print("do quotaCut 0.8 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
+                        else:
+                            if rC.cfs_quotaCut(badGroup, float(
+                                    self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
+                                return -1
+                            else:
+                                print("do quotaCut min for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
                     else:
-                        if rC.cfs_quotaCut(badGroup, float(
-                                self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
-                            return -1
-            # mem-bw-bound
-            else:
-                now_quota = rM.get_cfs_quota(badGroup)
-                if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
-                    if rC.cfs_quotaCut(badGroup, 0.8) == -1:
-                        return -1
+                        print("cut llc for:" + badGroup + " to llc:" + str(hex(llcM.cosLlcNum(llcM.groupCOS[badGroup]))))
                 else:
-                    if rC.cfs_quotaCut(badGroup, float(
-                            self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
-                        return -1
-        # core-bound
+                    print("give more llc for:" + self.own + " to llc:" + str(
+                        hex(llcM.cosLlcNum(llcM.groupCOS[self.own]))))
+        # core-bound,frontend-bound,mem-bound
         else:
             now_quota = rM.get_cfs_quota(badGroup)
             if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
                 if rC.cfs_quotaCut(badGroup, 0.8) == -1:
                     return -1
+                else:
+                    print("do quotaCut 0.8 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
             else:
                 if rC.cfs_quotaCut(badGroup, float(
                         self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
                     return -1
+                else:
+                    print("do quotaCut min for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
         throttled_group.add(badGroup)
         return 0
 

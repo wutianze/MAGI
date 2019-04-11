@@ -15,7 +15,7 @@ def drawTimeY(Y):
     plt.show()
 
 if __name__ == '__main__':
-    print(open("../data_cpu.txt",'r').read())
-    y = json.loads(open("../data_cpu.txt",'r').read())["xapian"]
+    #print(open("../data_cpu.txt",'r').read())
+    y = json.loads(open("../data_ipc.txt",'r').read())["xapian"]
 
     drawTimeY(y)

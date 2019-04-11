@@ -10,8 +10,9 @@ class Estimator:
         self.scaler = None
         self.groupName = groupName
         if os.access("/home/sauron/MAGI/model_" + groupName, os.F_OK):
-            self.nn = self.load_model("./model_" + groupName)
+            self.nn = self.load_model("model_" + groupName)
         else:
+            print("load fail,new a model")
             self.nn = neural_network.MLPRegressor()
 
         self.svm = svm.SVC(kernel='linear')
@@ -38,12 +39,12 @@ class Estimator:
 
 
 
-    def store_model(self, path = '/home/sauron/MAGI/model'):
-        externals.joblib.dump(self.nn,path)
+    def store_model(self, name):
+        externals.joblib.dump(self.nn,'/home/sauron/MAGI/' + name)
 
 
-    def load_model(self, path = '/home/sauron/MAGI/model'):
-        self.nn = externals.joblib.load(path)
+    def load_model(self, name):
+        self.nn = externals.joblib.load('/home/sauron/MAGI/' + name)
 
 
     def workable(self):
@@ -78,7 +79,7 @@ class Estimator:
         self.count += 1
         if self.count == STORESIZE:
             self.count = 0
-            self.store_model("./model_" + self.groupName)
+            self.store_model("model_" + self.groupName)
         #self.curr_score = model_selection.cross_val_score(self.model,X_train,Y_train,cv=5,scoring='accuracy').mean()
 
 
