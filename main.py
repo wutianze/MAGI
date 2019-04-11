@@ -9,6 +9,10 @@ import subprocess
 from multiprocessing import Process
 
 avaCpus = {3,4}
+
+STORE_PERIOD = 100
+
+
 def new_help(cmd):
     #print()
     if subprocess.getstatusoutput("sudo " + cmd)[0] != 0:
@@ -26,13 +30,20 @@ class CpuController:
         self.sample_len = sample_len
 
         self.policies = {}
-        for g in controll_config.keys():# g is just "app1", not "cpu/app1"
+        self.total_round = 0
+        self.experi_data_ipc = {}
+        self.experi_data_cpu = {}
+        for g in samples:
             self.policies[g] = po.Policy(g, self.allGroups, controll_config, accuracy)
+            self.experi_data_cpu[g] = []
+            self.experi_data_ipc[g] = []
 
         self.currentInfo = {}
         self.llcM = llcM
 
         self.throttled_group = set()
+
+
 
 
     # try to add the groups who break SLA
@@ -67,8 +78,19 @@ class CpuController:
                 return -1
             for g in self.allGroups: # allGroup should <= self.policies.keys()y
                 self.policies[g].with_run(self.currentInfo, self.enable_training)
+                self.experi_data_ipc[g].append(self.currentInfo[g]["ipc"])
+                self.experi_data_cpu[g].append(rM.get_cfs_quota(g))
             self.check_cpu(sample)
-            print("round ++")
+            print("round in a period is:" + str(self.total_round))
+            if self.total_round == STORE_PERIOD:
+                ipcF = open("data_ipc.txt",'w')
+                cpuF = open("data_cpu.txt", 'w')
+                json.dump(self.experi_data_ipc, ipcF)
+                json.dump(self.experi_data_cpu,cpuF)
+                ipcF.close()
+                cpuF.close()
+                self.total_round = 0
+            self.total_round += 1
 
 
 # select the least-ipc group in sample
@@ -130,12 +152,10 @@ class CpuController:
         policy = self.policies[group]
         if self.enable_data_driven and policy.estimator.workable():
             policy.throttle_target_select_setup(self.throttled_group, self.llcM)
-        '''
         else:
             if policy.rule_update(self.throttled_group, self.llcM) == -1:
                 print("Err: toplev_update Fail")
                 return -1
-            '''
         return 0
 
 if __name__ == '__main__':

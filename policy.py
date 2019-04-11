@@ -184,9 +184,11 @@ class Policy:
 
     # RULE Model
     def rule_update(self, throttled_group, llcM):
-        boundPart = rM.pmu.topDownGroup(self.own)# self.own is like "app1"
+        #boundPart = rM.pmu.topDownGroup(self.own)# self.own is like "app1"
+        boundPart = ""
         curGI = self.currentInfo[self.own]
         badGroup = ""
+        print("Now self.own = " + self.own)
         if boundPart == "Backend_Bound":
             # memory-bound
             if float(curGI["ipc"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
@@ -261,7 +263,6 @@ class Policy:
                 if rC.cfs_quotaCut(badGroup, float(
                         self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
                     return -1
-
         else:
             print("Warning: Rule Model can do Nothing more")
             return 0

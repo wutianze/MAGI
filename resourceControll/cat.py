@@ -86,7 +86,6 @@ class llcManager:
         return 0
 
     # recycleCOS should be invoked after the pid moved to another COS or it just finishes
-    # it doesn't do pqos op
     def recycleCOS(self,cos):# num can be all
         #if self.allocCache(coslist, str(ALLLLC)) == -1:
         #    return -1

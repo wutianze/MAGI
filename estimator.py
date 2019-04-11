@@ -75,6 +75,7 @@ class Estimator:
         self.nn.partial_fit(X_train,y_train)
         self.curr_score = self.nn.score(X_test,y_test)
         print("curr_score:" + str(self.curr_score))
+        self.count += 1
         if self.count == STORESIZE:
             self.count = 0
             self.store_model("./model_" + self.groupName)
