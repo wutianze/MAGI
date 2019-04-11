@@ -8,7 +8,7 @@ import resourceControll as rC
 import subprocess
 from multiprocessing import Process
 
-avaCpus = {1,0}
+avaCpus = {3,4}
 def new_help(cmd):
     #print()
     if subprocess.getstatusoutput("sudo " + cmd)[0] != 0:
@@ -38,8 +38,13 @@ class CpuController:
     # try to add the groups who break SLA
     def try_to_add_sample(self):
         tmp_info = None
+        check_live = 0
         while tmp_info == None:
-             tmp_info = rM.perf.getAllInfo(self.allGroups, self.sample_len)
+            if(check_live == 10):
+                print("Err: some app may exit!")
+                return -1
+            check_live += 1
+            tmp_info = rM.perf.getAllInfo(self.allGroups, self.sample_len)
         self.currentInfo = tmp_info
         samples = []
         for group in self.currentInfo.keys():
@@ -58,9 +63,12 @@ class CpuController:
             
             # try_to_add_sample will also collect the current info of all the groups
             sample = self.try_to_add_sample()
+            if sample == -1:
+                return -1
             for g in self.allGroups: # allGroup should <= self.policies.keys()y
                 self.policies[g].with_run(self.currentInfo, self.enable_training)
             self.check_cpu(sample)
+            print("round ++")
 
 
 # select the least-ipc group in sample
@@ -107,9 +115,13 @@ class CpuController:
                 if self.policies[t].controlConfig[t]["maxium_setups"]["cpu"] > now_quota * 1.25:
                     if rC.cfs_quotaCut(t, 1.25) == -1:
                         return -1
+                    else:
+                        print("relax action for:" + t + "now: " + str(rM.get_cfs_quota(t)))
                 else:
                     if rC.cfs_quotaCut(t,float(self.policies[t].controlConfig[t]["maxium_setups"]["cpu"] / now_quota)) == -1:
                         return -1
+                    else:
+                        print("relax action for:" + t + "now: " + str(rM.get_cfs_quota(t)))
 
         return 0
 
@@ -118,10 +130,12 @@ class CpuController:
         policy = self.policies[group]
         if self.enable_data_driven and policy.estimator.workable():
             policy.throttle_target_select_setup(self.throttled_group, self.llcM)
+        '''
         else:
             if policy.rule_update(self.throttled_group, self.llcM) == -1:
                 print("Err: toplev_update Fail")
                 return -1
+            '''
         return 0
 
 if __name__ == '__main__':
@@ -133,7 +147,7 @@ if __name__ == '__main__':
         parser.add_argument('--enable-data-driven')
         parser.add_argument('--samples', type=str, default="",
                             help="the groups needed to control")  # here the groups shouldn't be full path,ex: app1 not /cpu/app1
-        parser.add_argument('--accuracy', type=float, default=0.3, help="the threshold of model's accuracy")
+        parser.add_argument('--accuracy', type=float, default=0.1, help="the threshold of model's accuracy")
         parser.add_argument('--sample-length', type=int, default=4,
                             help="how many seconds the sampling measurement should cover")
         parser.add_argument('--sleep', type=int, default=1, help="pause sleep seconds between each round")

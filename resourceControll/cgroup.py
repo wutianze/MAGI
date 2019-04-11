@@ -27,8 +27,8 @@ def addProcs(subsystem,path_to_cgroup,pid):
 
 def new_app(subsystem, path_to_cgroup, cmd):
     #print()
-    if subprocess.getstatusoutput("sudo cgexec -g " + subsystem + ":" + path_to_cgroup + " " + cmd)[0] != 0:
-        print("Err: Start or Running Process in cgroup Fail")
+    print(subprocess.getoutput("sudo cgexec -g " + subsystem + ":" + path_to_cgroup + " " + cmd))
+
 
 # path_to_cgroup is like "app1"
 def startProcs(subsystem, path_to_cgroup, cmd):

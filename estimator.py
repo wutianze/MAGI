@@ -2,16 +2,25 @@ from sklearn import preprocessing,neural_network,model_selection,datasets,cluste
 import random
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+STORESIZE = 10
 
 class Estimator:
-    def __init__(self,accuracy, eps = 0.3, min_samples = 10):
+    def __init__(self,accuracy, groupName, eps = 0.3, min_samples = 10):
         self.scaler = None
-        self.nn = neural_network.MLPRegressor()
+        self.groupName = groupName
+        if os.access("/home/sauron/MAGI/model_" + groupName, os.F_OK):
+            self.nn = self.load_model("./model_" + groupName)
+        else:
+            self.nn = neural_network.MLPRegressor()
+
         self.svm = svm.SVC(kernel='linear')
         self.accuracy_demand = accuracy
         self.curr_score = 0
         self.eps = eps
         self.min_samples = min_samples
+        self.count = 0
+
 
 
     def find_sv_i(self, train_X, train_y):
@@ -29,11 +38,11 @@ class Estimator:
 
 
 
-    def store_model(self, path = './model'):
+    def store_model(self, path = '/home/sauron/MAGI/model'):
         externals.joblib.dump(self.nn,path)
 
 
-    def load_model(self, path = './model'):
+    def load_model(self, path = '/home/sauron/MAGI/model'):
         self.nn = externals.joblib.load(path)
 
 
@@ -66,6 +75,9 @@ class Estimator:
         self.nn.partial_fit(X_train,y_train)
         self.curr_score = self.nn.score(X_test,y_test)
         print("curr_score:" + str(self.curr_score))
+        if self.count == STORESIZE:
+            self.count = 0
+            self.store_model("./model_" + self.groupName)
         #self.curr_score = model_selection.cross_val_score(self.model,X_train,Y_train,cv=5,scoring='accuracy').mean()
 
 
@@ -74,16 +86,17 @@ class Estimator:
 
 
 if __name__ == '__main__':
+
     loaded_data = datasets.load_boston()
     data_x = loaded_data.data
     data_y = loaded_data.target
     print(data_y)
-    e = Estimator(0.3)
+    e = Estimator(0.3,"test")
     e.scaler_init(data_x)
-
+    ee = e.load_model("whatever")
     newX, newy = e.pre_data(data_x, data_y)
 
-    for i in range(100):
+    for i in range(1000):
         e.train(newX, newy)
         if i % 100 == 0:
             print(e.curr_score)

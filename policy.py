@@ -17,7 +17,7 @@ class Policy:
     def __init__(self,group,groups,control_config,accuracy):
         self.own = group# "app1"
         self.controlConfig = control_config
-        self.estimator = es.Estimator(accuracy)
+        self.estimator = es.Estimator(accuracy, group)
         self.groups = groups#["app1","app2"]
         self.currentInfo = {}
         self.roundHistoryX = []
@@ -48,7 +48,8 @@ class Policy:
     def generate_one_train_data(self, infoList):
         train_X = []
         for tar in subTar:
-            train_X.append(infoList[self.own][tar])#infoList["app1"][...]
+            if tar != "cycles":
+                train_X.append(infoList[self.own][tar])#infoList["app1"][...]
         for tar in mainExTar:
             train_X.append(infoList[self.own][tar])
         for g in self.groups:# groups:["app1","app2"] g: "app1"
@@ -58,9 +59,6 @@ class Policy:
         train_y = float(infoList[self.own]["ipc"])
         return train_X, train_y
 
-
-    def train_store(self):
-        self.estimator.store_model()
 
 
     def diff_index(self, x1, x2):
@@ -205,9 +203,17 @@ class Policy:
                             if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
                                 if rC.cfs_quotaCut(badGroup, 0.8) == -1:
                                     return -1
+                                else:
+                                    print("do quotaCut 0.8 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
                             else:
                                 if rC.cfs_quotaCut(badGroup, float(self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
                                     return -1
+                                else:
+                                    print("do quotaCut until min for:" + badGroup + " now is:" + str(rM.get_cfs_quota(badGroup)))
+                        else:
+                            print("cut llc for:" + badGroup + " to llc:" + str(hex(llcM.cosLlcNum(llcM.groupCOS[badGroup]))))
+                    else:
+                        print("give more llc for:" + self.own + " to llc:" + str(hex(llcM.cosLlcNum(llcM.groupCOS[self.own]))))
                 # mem-bw-bound
                 else:
                     badGroup = rM.findGroupConsumeMostMbl(self.groups,self.own)
