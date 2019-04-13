@@ -14,7 +14,7 @@
 		},
 	"xapian":{
 		"SLA":{
-			"ipc":0.25
+			"ipc":0.26
 			},
 		"minimum_setups":{
 			"cpu":40000,

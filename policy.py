@@ -170,18 +170,18 @@ class Policy:
                     "llc"] or llcM.moreLlc(
                         llcM.groupCOS[self.own],
                         int((self.controlConfig[self.own]["maximum_setups"]["llc"] - llcM.cosLlcNum(llcM.groupCOS[
-                                                                                                        self.own])) / 2) + 1) == -1:
+                                                                                                        self.own])) / 4) + 1) == -1:
                     if llcM.cosLlcNum(llcM.groupCOS[badGroup]) <= self.controlConfig[badGroup]["minimum_setups"][
                         "llc"] or llcM.lessLlc(
                             llcM.groupCOS[badGroup], int((llcM.cosLlcNum(llcM.groupCOS[badGroup]) -
                                                           self.controlConfig[badGroup]["minimum_setups"][
-                                                              "llc"]) / 2) + 1) == -1:
+                                                              "llc"]) / 4) + 1) == -1:
                         now_quota = rM.get_cfs_quota(badGroup)
-                        if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
-                            if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                        if now_quota * 0.9 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
+                            if rC.cfs_quotaCut(badGroup, 0.9) == -1:
                                 return -1
                             else:
-                                print("do quotaCut 0.8 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
+                                print("do quotaCut 0.9 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
                         else:
                             if rC.cfs_quotaCut(badGroup, float(
                                     self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
@@ -196,11 +196,11 @@ class Policy:
         # core-bound,frontend-bound,mem-bound
         else:
             now_quota = rM.get_cfs_quota(badGroup)
-            if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
-                if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+            if now_quota * 0.9 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
+                if rC.cfs_quotaCut(badGroup, 0.9) == -1:
                     return -1
                 else:
-                    print("do quotaCut 0.8 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
+                    print("do quotaCut 0.9 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
             else:
                 if rC.cfs_quotaCut(badGroup, float(
                         self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
@@ -238,18 +238,18 @@ class Policy:
                 # llc-bound
                 if float(rM.cat.getGroupsSumMbl(self.own))/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
-                    if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"]["llc"] or llcM.moreLlc(llcM.groupCOS[self.own], int((self.controlConfig[self.own]["maximum_setups"]["llc"] - llcM.cosLlcNum(llcM.groupCOS[self.own])) / 2) + 1) == -1:
+                    if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"]["llc"] or llcM.moreLlc(llcM.groupCOS[self.own], int((self.controlConfig[self.own]["maximum_setups"]["llc"] - llcM.cosLlcNum(llcM.groupCOS[self.own])) / 4) + 1) == -1:
                         badGroup = rM.findGroupConsumeMostLlc(self.groups,self.own)
                         if badGroup == "":
                             print("Warining: Single process? Just Ignore")
                             return 0
-                        if llcM.cosLlcNum(llcM.groupCOS[badGroup]) <= self.controlConfig[badGroup]["minimum_setups"]["llc"] or llcM.lessLlc(llcM.groupCOS[badGroup], int((llcM.cosLlcNum(llcM.groupCOS[badGroup])- self.controlConfig[badGroup]["minimum_setups"]["llc"]) / 2) + 1) == -1:
+                        if llcM.cosLlcNum(llcM.groupCOS[badGroup]) <= self.controlConfig[badGroup]["minimum_setups"]["llc"] or llcM.lessLlc(llcM.groupCOS[badGroup], int((llcM.cosLlcNum(llcM.groupCOS[badGroup])- self.controlConfig[badGroup]["minimum_setups"]["llc"]) / 4) + 1) == -1:
                             now_quota = rM.get_cfs_quota(badGroup)
-                            if now_quota * 0.8 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
-                                if rC.cfs_quotaCut(badGroup, 0.8) == -1:
+                            if now_quota * 0.9 > self.controlConfig[badGroup]["minimum_setups"]["cpu"]:
+                                if rC.cfs_quotaCut(badGroup, 0.9) == -1:
                                     return -1
                                 else:
-                                    print("do quotaCut 0.8 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
+                                    print("do quotaCut 0.9 for:" + badGroup + " to:" + str(rM.get_cfs_quota(badGroup)))
                             else:
                                 if rC.cfs_quotaCut(badGroup, float(self.controlConfig[badGroup]["minimum_setups"]["cpu"] / now_quota)) == -1:
                                     return -1

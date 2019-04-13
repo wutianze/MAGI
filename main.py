@@ -38,6 +38,8 @@ class CpuController:
 
         self.throttled_group = set()
 
+        self.relax_count = 0
+
 
 
 
@@ -131,8 +133,11 @@ class CpuController:
 
         if group is not None:
             self.start_cpu_throttle_analyst(group)
-        elif len(self.throttled_group) != 0:
+        elif self.relax_count >= 2:
+            self.relax_count = 0
             self.start_cpu_relax_analyst()
+        else:
+            self.relax_count += 1
 
 
     def start_cpu_relax_analyst(self):
@@ -143,11 +148,11 @@ class CpuController:
         for t in self.throttled_group:
             print(self.policies[t].controlConfig[t]["maximum_setups"]["llc"])
             if self.policies[t].controlConfig[t]["maximum_setups"]["llc"] <= self.llcM.cosLlcNum(llcM.groupCOS[t]) \
-                    or self.llcM.moreLlc(llcM.groupCOS[t], int((self.policies[t].controlConfig[t]["maximum_setups"]["llc"] - self.llcM.cosLlcNum(llcM.groupCOS[t])) / 2) + 1) == -1:
+                    or self.llcM.moreLlc(llcM.groupCOS[t], int((self.policies[t].controlConfig[t]["maximum_setups"]["llc"] - self.llcM.cosLlcNum(llcM.groupCOS[t])) / 4) + 1) == -1:
                 now_quota = rM.get_cfs_quota(t)
                 print("now_quota is" + str(now_quota))
-                if self.policies[t].controlConfig[t]["maximum_setups"]["cpu"] > now_quota * 1.25:
-                    if rC.cfs_quotaCut(t, 1.25) == -1:
+                if self.policies[t].controlConfig[t]["maximum_setups"]["cpu"] > now_quota * 1.1:
+                    if rC.cfs_quotaCut(t, 1.1) == -1:
                         return -1
                     else:
                         print("relax action for:" + t + " now: " + str(rM.get_cfs_quota(t)))
@@ -184,7 +189,7 @@ if __name__ == '__main__':
         parser.add_argument('--accuracy', type=float, default=0.1, help="the threshold of model's accuracy")
         parser.add_argument('--sample-length', type=int, default=4,
                             help="how many seconds the sampling measurement should cover")
-        parser.add_argument('--sleep', type=int, default=3, help="pause sleep seconds between each round")
+        parser.add_argument('--sleep', type=int, default=2, help="pause sleep seconds between each round")
         args = parser.parse_args()
         en_data = args.enable_data_driven != None
         en_tra = args.enable_training != None
