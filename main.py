@@ -184,7 +184,7 @@ if __name__ == '__main__':
         parser.add_argument('--accuracy', type=float, default=0.1, help="the threshold of model's accuracy")
         parser.add_argument('--sample-length', type=int, default=4,
                             help="how many seconds the sampling measurement should cover")
-        parser.add_argument('--sleep', type=int, default=1, help="pause sleep seconds between each round")
+        parser.add_argument('--sleep', type=int, default=3, help="pause sleep seconds between each round")
         args = parser.parse_args()
         en_data = args.enable_data_driven != None
         en_tra = args.enable_training != None

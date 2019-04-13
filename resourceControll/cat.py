@@ -117,6 +117,8 @@ class llcManager:
                 return -1
             if self.allocCache([cos], [llcs]) == -1:
                 print("Err:lessLlc when re-allocate cache fail")
+                print(cos)
+                print(llcs)
                 return -1
             self.avaCOS.remove(cos)
             return 0
@@ -141,6 +143,7 @@ class llcManager:
             llcs = self.findFreeLlc(num)
             if llcs == -1:
                 print("Err: No enough excessive cache")
+                print(self.cosLlc)
                 self.allocCache([cos],[old_llc])
                 return -1
             if self.allocCache([cos], [llcs]) == -1:
@@ -166,6 +169,7 @@ class llcManager:
         cmd += "\""
         if subprocess.getstatusoutput(cmd)[0] != 0:
             print("Err: allocCache Fail")
+            print(self.cosLlc)
             return -1
         for cos, llc in zip(coses,llcs):
             self.cosLlc[cos] = llc
@@ -173,7 +177,8 @@ class llcManager:
                 self.freeLlc = self.freeLlc ^ llc
                 self.cosLlc[0] = (self.cosLlc[0] & llc) ^ self.cosLlc[0]
                 if subprocess.getstatusoutput("sudo pqos -e \"llc:0=" + str(self.cosLlc[0]) + ";\"")[0] != 0:
-                    print("Err: allocCache Fail")
+                    print("Err: allocCache for COS0 Fail")
+                    print(self.cosLlc)
                     return -1
         return 0
 
