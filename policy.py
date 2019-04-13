@@ -1,10 +1,13 @@
+import os
+
 import estimator as es
 import resourceControll as rC
 import resourceMonitor as rM
 import numpy as np
 import math
+import json
 
-TRAINCIRCLE = 200
+TRAINCIRCLE = 100
 
 RULEIPCBOUND = 1
 RULEMPKIBOUND = 5
@@ -22,9 +25,13 @@ class Policy:
         self.currentInfo = {}
         self.roundHistoryX = []
         self.roundHistoryy = []
-        self.historyX = []
-        self.historyy = []
 
+        if os.access("historyX_" + self.own + ".txt", os.F_OK) and os.access("historyy_" + self.own + ".txt", os.F_OK):
+            self.historyX = json.loads(open("historyX_" + self.own + ".txt", 'r').read())[self.own]
+            self.historyy = json.loads(open("historyy_" + self.own + ".txt", 'r').read())[self.own]
+        else:
+            self.historyX = []
+            self.historyy = []
         self.count = 0
 
     def with_run(self, infoList, train_enable):
@@ -41,9 +48,16 @@ class Policy:
             self.historyy += train_y.tolist()
             self.roundHistoryX.clear()
             self.roundHistoryy.clear()# can store to local disk for future use
+            historyXF = open("historyX_" + self.own + ".txt", 'w')
+            historyyF = open("historyy_" + self.own + ".txt", 'w')
+            json.dump({str(self.own):self.historyX},historyXF)
+            json.dump({str(self.own):self.historyy},historyyF)
+            historyXF.close()
+            historyyF.close()
             self.count = 0
             if train_enable:
                 self.estimator.train(np.array(self.historyX), np.array(self.historyy))
+
 
     def generate_one_train_data(self, infoList):
         train_X = []
@@ -62,12 +76,14 @@ class Policy:
 
 
     def diff_index(self, x1, x2):
-        dist = np.linalg.norm(np.array(x1 - x2))
+        #print("diff_index")
+        dist = np.linalg.norm(np.array(x1) - np.array(x2))
+        #print("dist:" + str(dist))
 
         sepDiff = []
         main1 = []
         main2 = []
-        mainNum = len(subTar)+len(mainExTar)
+        mainNum = len(subTar)+len(mainExTar) - 1
         for i in range(mainNum):
             main1.append(x1[i])
             main2.append(x2[i])
@@ -79,21 +95,34 @@ class Policy:
                 sub1.append(x1[mainNum + j])
                 sub2.append(x2[mainNum + j])
             sepDiff.append(np.linalg.norm(np.array(sub1) - np.array(sub2)))
-            mainNum += len(subTar)
+            mainNum += len(subTar) - 1
         diffSum = np.sum(np.array(sepDiff))
         std_entropy = 0.0
         for d in sepDiff:# H = - ∑  Pi * log2 Pi
+            if float(diffSum) == 0:
+                return -1
             p = float(d)/float(diffSum)
+            #print("p = " + str(p))
+            if p == 0:
+                continue
+            if p < 0:
+                return -1
             std_entropy -= math.log(p,2) * p
         return dist * (1.0 + std_entropy)
 
 
     def find_basic_x(self, curr_x):
-        small_set = self.estimator.find_sv_statisfy_v(self.historyX, self.historyy, float(self.controlConfig[self.own]["SLA"]))
+        #print("find_basic_x")
+        small_set = self.estimator.find_sv_statisfy_v(self.historyX, self.historyy, float(self.controlConfig[self.own]["SLA"]["ipc"]))
+        if small_set == -1:
+            return -1
         basic_x = None
-        least_diff = 9999999.9
+        least_diff = 999999999999999999.9
         for x in small_set:
             tmp_diff = self.diff_index(curr_x, x)
+            if tmp_diff == -1:
+                #print("small set len now is:" + str(len(small_set)))
+                continue
             if tmp_diff < least_diff:
                 least_diff = tmp_diff
                 basic_x = x
@@ -102,29 +131,34 @@ class Policy:
 
 
     def select_throttle_target(self):
-        curr_x = self.roundHistoryX[-1]
+        #print("select throttle target")
+        #print(len(self.roundHistoryX))
+        curr_x = self.historyX[-1] # why not use currentInfo? because the main app don't have cycles
         basic_x = self.find_basic_x(curr_x)
+        if basic_x == -1 or basic_x == None:
+            return None
         base_ipc = self.estimator.inference(basic_x)
+        #print("base_ipc:" + str(base_ipc))
         i = 0
         biggest_delta = 0
         target = ""
         for g in self.groups:
             if g != self.own:
                 new_x = basic_x
-                g_start = len(mainExTar) + len(subTar) + i * len(subTar)
+                g_start = len(mainExTar) + len(subTar) + i * len(subTar) - 1# -1 for except cycles in main app
                 i += 1
                 for j in range(len(subTar)):
                     new_x[g_start + j] = curr_x[g_start + j]
                 guess = self.estimator.inference(new_x)
-                if abs(float(guess) - base_ipc) > biggest_delta:
+                if abs(float(guess) - base_ipc) >= biggest_delta:
                     biggest_delta = abs(float(guess) - base_ipc)
                     target = g
         return target
 
 
     def set_throttle_setup(self, badGroup, throttled_group, llcM):
-        if badGroup == "":
-            print("Warining: Single process? Just Ignore")
+        if badGroup == None or badGroup == "":
+            print("Warining: Single process? Just Ignore.Or badGroup is None")
             return 0
         curGI = self.currentInfo[self.own]
         # memory-bound
@@ -178,8 +212,9 @@ class Policy:
 
 
     def throttle_target_select_setup(self, throttled_group, llcM):
+        print("throttle_target_select_setup")
         badGroup = self.select_throttle_target()
-        if badGroup == "":
+        if badGroup == None or badGroup == "":
             # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
             print("Have no targets")
             return -1

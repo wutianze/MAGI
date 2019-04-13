@@ -1,12 +1,13 @@
 import subprocess
 
 ALLLLC = 0xfffff
+FREELLC = 0x3ffff
 FORCHECK = 0x80000
 TOTALLLC = 20
 # the manager is not thread safe !!
 class llcManager:
     def __init__(self,numCOS):# numCOS doesn't have COS0,COS0 should keep at least 2 cache,and COS0's own caches are always remain in the left like: 0xc0000
-        self.freeLlc = ALLLLC
+        self.freeLlc = FREELLC
         self.cosLlc = {}
         self.cosLlc[0] = ALLLLC
         self.avaCOS = set()
@@ -15,6 +16,7 @@ class llcManager:
             self.avaCOS.add(i+1)
 
     def cosLlcNum(self,cos):
+        print("cosLlcNum")
         llcs = 0x0
         res = 0
         if cos == -1:# count free num,COS0 has at least 2 cache
@@ -98,6 +100,7 @@ class llcManager:
 
     # cut the llc in cos by num
     def lessLlc(self, cos, num):
+        print("do lessLlc")
         if cos == 0:
             print("Err: lessLlc have cos=0")
             return -1
@@ -119,6 +122,7 @@ class llcManager:
             return 0
 
     def moreLlc(self, cos, num):
+        print("do moreLlc")
         if cos == 0:
             if self.tryCombineFreeCOS0() == -1:
                 print("Err: moreLlc have cos=0 and combineFree fail")

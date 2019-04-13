@@ -71,7 +71,11 @@ def getInfo(group, sample_len):
         if event == "instructions":
             ipc = forHandle[index].strip().split('|')[6]
         index = index + 1
-        groupData[event] = float(val)
+        try:
+            groupData[event] = float(val)
+        except:
+            print("change float fail:" + str(val))
+            return None
     groupData["ipc"] = ipc
     return groupData
 

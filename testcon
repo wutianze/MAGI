@@ -1,11 +1,11 @@
 {
 "mcf":{
 		"SLA":{
-			"ipc":0.1
+			"ipc":0.0
 			},
 		"minimum_setups":{
-			"cpu":60000,
-			"llc":6
+			"cpu":80000,
+			"llc":4
 			},
 		"maximum_setups":{
 			"cpu":200000,
@@ -14,10 +14,10 @@
 		},
 	"xapian":{
 		"SLA":{
-			"ipc":0.2
+			"ipc":0.3
 			},
 		"minimum_setups":{
-			"cpu":80000,
+			"cpu":40000,
 			"llc":4
 			},
 		"maximum_setups":{

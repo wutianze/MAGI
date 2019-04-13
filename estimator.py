@@ -3,14 +3,15 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-STORESIZE = 10
+STORESIZE = 1
+SAVE_PATH = ""
 
 class Estimator:
     def __init__(self,accuracy, groupName, eps = 0.3, min_samples = 10):
         self.scaler = None
         self.groupName = groupName
-        if os.access("/home/sauron/MAGI/model_" + groupName, os.F_OK):
-            self.nn = self.load_model("model_" + groupName)
+        if os.access(SAVE_PATH + "model_" + groupName, os.F_OK):
+            self.load_model("model_" + groupName)
         else:
             print("load fail,new a model")
             self.nn = neural_network.MLPRegressor()
@@ -25,26 +26,50 @@ class Estimator:
 
 
     def find_sv_i(self, train_X, train_y):
-        self.svm.fit(train_X,train_y)
+        #print(train_X)
+        #print(train_y)
+        self.svm.fit(np.array(train_X),np.array(train_y))
+        #print("support:")
+        #print(self.svm.support_)
         return self.svm.support_
 
 
     def find_sv_statisfy_v(self, train_X, train_y, sla):
+        #print("find_sv_statisy_v")
+        #print(train_X)
+        #print(train_y)
         res = []
-        indexS = self.find_sv_i(train_X, train_y)
-        for i in indexS:
+        find_y = []
+        true_count = False
+        false_count = False
+        for i in range(len(train_X)):
             if float(train_y[i]) > sla:
-                res.append(train_X[i])
+                find_y.append(1)
+                true_count = True
+            else:
+                find_y.append(0)
+                false_count = True
+        if true_count and false_count:
+            indexS = self.find_sv_i(train_X, find_y)
+            for i in indexS:
+                if float(train_y[i]) > sla:
+                    res.append(train_X[i])
+        elif true_count:# randomly select 10
+            for i in range(10):
+                if float(train_y[i]) > sla:
+                    res.append(train_X[i])
+        else:
+            return -1
         return res
 
 
 
     def store_model(self, name):
-        externals.joblib.dump(self.nn,'/home/sauron/MAGI/' + name)
+        externals.joblib.dump(self.nn,SAVE_PATH + name)
 
 
     def load_model(self, name):
-        self.nn = externals.joblib.load('/home/sauron/MAGI/' + name)
+        self.nn = externals.joblib.load(SAVE_PATH + name)
 
 
     def workable(self):
@@ -58,8 +83,11 @@ class Estimator:
 
 
     def pre_data(self, X, y):
+        X = np.array(X)
+        y = np.array(y)
         X = self.scaler.transform(X)
-        print(X.shape)
+        if X.ndim <= 100:
+            return X,y
         #Xy = np.column_stack((X,y))
         db = cluster.DBSCAN(eps=self.eps, min_samples=self.min_samples).fit(X)
         noise = []
@@ -80,11 +108,12 @@ class Estimator:
         if self.count == STORESIZE:
             self.count = 0
             self.store_model("model_" + self.groupName)
+
         #self.curr_score = model_selection.cross_val_score(self.model,X_train,Y_train,cv=5,scoring='accuracy').mean()
 
 
     def inference(self, X):
-        return float(self.nn.predict(X))
+        return float(self.nn.predict([X])[0])
 
 
 if __name__ == '__main__':
@@ -92,19 +121,20 @@ if __name__ == '__main__':
     loaded_data = datasets.load_boston()
     data_x = loaded_data.data
     data_y = loaded_data.target
-    print(data_y)
-    e = Estimator(0.3,"test")
+    ss = svm.SVC(kernel='linear')
+    ss.fit(data_x,data_y)
+    #nn = externals.joblib.load(SAVE_PATH + "model_sta")
+    #print(data_y)
+    e = Estimator(0.3,"sta")
     e.scaler_init(data_x)
-    ee = e.load_model("whatever")
+
     newX, newy = e.pre_data(data_x, data_y)
 
-    for i in range(1000):
+    for i in range(1):
         e.train(newX, newy)
         if i % 100 == 0:
             print(e.curr_score)
 
-    e.store_model()
-    e.load_model()
 
 
 
