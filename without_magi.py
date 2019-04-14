@@ -8,7 +8,7 @@ import resourceControll as rC
 import subprocess
 from multiprocessing import Process
 
-avaCpus = {8,9}
+avaCpus = {8,9,10}
 
 
 def new_help(cmd):
@@ -18,12 +18,13 @@ def new_help(cmd):
 
 
 if __name__ == '__main__':
-    s_f = ["xapian","mcf"]
+    s_f = ["xapian","mcf","lbm"]
     try:
         control = 3
         llcM = rC.cat.llcManager(4)
         s = "xapian"
         s1 = "mcf"
+        s2 = "lbm"
         if control == 0:# xapian run alone ,with resource limit and in one core
             rC.createCgroup("cpu,perf_event,cpuset", s)
             rC.cpusSet(avaCpus.pop(), s)
@@ -59,6 +60,8 @@ if __name__ == '__main__':
 
             rC.createCgroup("perf_event", s1)
             rC.startProcs("perf_event", s1, "/home/sauron/MAGI/run_" + s1)
+            rC.createCgroup("perf_event", s2)
+            rC.startProcs("perf_event", s2, "/home/sauron/MAGI/run_" + s2)
 
         elif control == 3:# xapian run with mcf ,without resource limit and in own core
             rC.createCgroup("perf_event,cpuset", s)
@@ -74,6 +77,11 @@ if __name__ == '__main__':
             rC.cpusSet(avaCpus.pop(), s1)
             rC.cpusetMemsSet(0, s1)
             rC.startProcs("perf_event", s1, "/home/sauron/MAGI/run_" + s1)
+
+            rC.createCgroup("perf_event,cpuset", s2)
+            rC.cpusSet(avaCpus.pop(), s2)
+            rC.cpusetMemsSet(0, s2)
+            rC.startProcs("perf_event", s2, "/home/sauron/MAGI/run_" + s2)
 
         '''
         s = "mcf"

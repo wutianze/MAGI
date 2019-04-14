@@ -69,7 +69,7 @@ if __name__ == '__main__':
     plt.grid(linestyle=':')
     plt.plot(x, Fi["xapian"]["cpu"], ">-", label="xapian")
     plt.plot(x, Fi["mcf"]["cpu"], ">-", label="mcf")
-    plt.plot(x, Fi["lbm"]["cpu"], ">-", label="cpu")
+    plt.plot(x, Fi["lbm"]["cpu"], ">-", label="lbm")
     plt.title("Cpu of Apps")
     plt.xlabel("time")
     plt.ylabel("cpu quota")

@@ -1,6 +1,7 @@
 import json
 #import logging
 import argparse
+import random
 import time
 import policy as po
 import resourceMonitor as rM
@@ -144,7 +145,7 @@ class CpuController:
         print("start_cpu_relax_analyst")
         t = ""
         if len(self.throttled_group) == 0:
-            t = self.allGroups[0]
+            t = random.choice(self.allGroups)
         else:
             t = self.throttled_group.pop()
         #print(self.policies[t].controlConfig[t]["maximum_setups"]["llc"])
