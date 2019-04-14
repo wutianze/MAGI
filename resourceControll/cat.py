@@ -4,6 +4,7 @@ ALLLLC = 0xfffff
 FREELLC = 0x3ffff
 FORCHECK = 0x80000
 TOTALLLC = 20
+FREELLCNUM = 18
 # the manager is not thread safe !!
 class llcManager:
     def __init__(self,numCOS):# numCOS doesn't have COS0,COS0 should keep at least 2 cache,and COS0's own caches are always remain in the left like: 0xc0000
@@ -15,13 +16,14 @@ class llcManager:
         for i in range(numCOS):
             self.avaCOS.add(i+1)
 
+
+
     def cosLlcNum(self,cos):
-        print("cosLlcNum")
+        #print("cosLlcNum")
         llcs = 0x0
         res = 0
         if cos == -1:# count free num,COS0 has at least 2 cache
             llcs = self.freeLlc
-            res -= 2
         else:
             llcs = self.cosLlc[cos]
 
@@ -37,11 +39,11 @@ class llcManager:
         llc = 0
         for i in range(num):
             llc += 2 ** i
-        for i in range(TOTALLLC - 2):# because there are 2 caches for COS0
+        for i in range(TOTALLLC):# because there are 2 caches for COS0
             if (self.freeLlc >> i) & llc == llc:
                 return llc << i
         print("No enough excessive free llc")#may do a clear up
-        return -1 # mean wrong
+        return -2 # mean no excessive free llc
 
 
     # in this function, the controll part of  llc is hard to check, so we just give up checking
@@ -75,28 +77,23 @@ class llcManager:
                 break
             cos0End -= 1
         cos0End += 1
-        freeLeftEnd = TOTALLLC - 1
+        freeLeftEnd = FREELLCNUM - 1
         while freeLeftEnd >= 0:
             if self.freeLlc >> freeLeftEnd & 1 != 1:
                 break
             freeLeftEnd -= 1
         freeLeftEnd += 1
         if freeLeftEnd < cos0End:  # mean can combine cache to cos0
-            newCOS0 = (self.freeLlc >> freeLeftEnd) << freeLeftEnd
-            if self.allocCache([0],[newCOS0]) == -1:
-                return -1
-        return 0
+            newCOS0 = ((self.freeLlc >> freeLeftEnd) << freeLeftEnd)|self.cosLlc[0]
+            self.allocCache([0],[newCOS0])
 
     # recycleCOS should be invoked after the pid moved to another COS or it just finishes
     def recycleCOS(self,cos):# num can be all
         #if self.allocCache(coslist, str(ALLLLC)) == -1:
         #    return -1
         self.freeLlc = self.freeLlc | self.cosLlc[cos]
-        #self.cosLlc[cos] = ALLLLC
-        if self.tryCombineFreeCOS0() == -1:
-            print("Warning:when combine freellc with COS0 Fail")  # not big problem
         self.avaCOS.add(cos)
-        return 0
+
 
     # cut the llc in cos by num
     def lessLlc(self, cos, num):
@@ -109,49 +106,62 @@ class llcManager:
             return -1
         else:
             num = self.cosLlcNum(cos) - num
-            if self.recycleCOS(cos) == -1:
-                return -1
+            self.recycleCOS(cos)
             llcs = self.findFreeLlc(num)
             if llcs == -1:
                 print("Err:some other process may change COS")
                 return -1
-            if self.allocCache([cos], [llcs]) == -1:
-                print("Err:lessLlc when re-allocate cache fail")
-                print(cos)
-                print(llcs)
-                return -1
+            self.allocCache([cos], [llcs])
             self.avaCOS.remove(cos)
+            self.tryCombineFreeCOS0()
             return 0
 
     def moreLlc(self, cos, num):
         print("do moreLlc")
         if cos == 0:
-            if self.tryCombineFreeCOS0() == -1:
-                print("Err: moreLlc have cos=0 and combineFree fail")
-                return -1
+            self.tryCombineFreeCOS0()
             print("Warning: Try to give more llc to COS0, tried best")
             return 0
         if int(num) >= self.cosLlcNum(cos) + self.cosLlcNum(-1):
-            print("Err: No enough llc to cut in lessLlc")
+            print("Err: No enough llc to give in moreLlc")
             return -1
         else:
             old_num = self.cosLlcNum(cos)
             old_llc = self.cosLlc[cos]
             num = old_num + num
-            if self.recycleCOS(cos) == -1:
-                return -1
+            self.recycleCOS(cos)
             llcs = self.findFreeLlc(num)
             if llcs == -1:
-                print("Err: No enough excessive cache")
+                print("Err: No enough cache")
                 print(self.cosLlc)
+                self.avaCOS.remove(cos)
                 self.allocCache([cos],[old_llc])
                 return -1
-            if self.allocCache([cos], [llcs]) == -1:
-                print("Err:lessLlc when re-allocate cache fail")
-                return -1
+            if llcs == -2:
+                print("do big reallocation")
+                for g in self.groupCOS.keys():
+                    tmpc = self.groupCOS[g]
+                    if tmpc != cos:
+                        self.recycleCOS(tmpc)
+                for g in self.groupCOS.keys():
+                    tmpc = self.groupCOS[g]
+                    newF = 0
+                    if tmpc == cos:
+                        newF = self.findFreeLlc(num)
+                    else:
+                        newF = self.findFreeLlc(self.cosLlcNum(tmpc))
+                    self.allocCache([tmpc],[newF])
+                    self.avaCOS.remove(tmpc)
+                self.tryCombineFreeCOS0()
+                return 0
+            self.allocCache([cos], [llcs])
             self.avaCOS.remove(cos)
             return 0
-
+    '''
+    def reAlloc(self):
+        for g in self.groupCOS.keys():
+            self.lessLlc()
+            '''
 
     # Sets all COS to default (fill into all ways) and associates all cores with COS 0
     def resetCAT(self, numCOS):
@@ -170,16 +180,16 @@ class llcManager:
         if subprocess.getstatusoutput(cmd)[0] != 0:
             print("Err: allocCache Fail")
             print(self.cosLlc)
-            return -1
+            raise Exception('CAT Controller Err')
         for cos, llc in zip(coses,llcs):
             self.cosLlc[cos] = llc
             if cos != 0:
                 self.freeLlc = self.freeLlc ^ llc
                 self.cosLlc[0] = (self.cosLlc[0] & llc) ^ self.cosLlc[0]
-                if subprocess.getstatusoutput("sudo pqos -e \"llc:0=" + str(self.cosLlc[0]) + ";\"")[0] != 0:
+                if subprocess.getstatusoutput("sudo pqos -I -e \"llc:0=" + str(self.cosLlc[0]) + ";\"")[0] != 0:
                     print("Err: allocCache for COS0 Fail")
                     print(self.cosLlc)
-                    return -1
+                    raise Exception('CAT Controller Err')
         return 0
 
 

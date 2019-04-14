@@ -8,9 +8,9 @@ import resourceControll as rC
 import subprocess
 from multiprocessing import Process
 
-avaCpus = {3,4}
+avaCpus = {8,9,10}
 
-STORE_PERIOD = 20
+STORE_PERIOD = 40
 
 
 def new_help(cmd):
@@ -142,26 +142,29 @@ class CpuController:
 
     def start_cpu_relax_analyst(self):
         print("start_cpu_relax_analyst")
+        t = ""
         if len(self.throttled_group) == 0:
-            for g in self.allGroups:
-                self.throttled_group.add(g)
-        for t in self.throttled_group:
-            print(self.policies[t].controlConfig[t]["maximum_setups"]["llc"])
-            if self.policies[t].controlConfig[t]["maximum_setups"]["llc"] <= self.llcM.cosLlcNum(llcM.groupCOS[t]) \
-                    or self.llcM.moreLlc(llcM.groupCOS[t], int((self.policies[t].controlConfig[t]["maximum_setups"]["llc"] - self.llcM.cosLlcNum(llcM.groupCOS[t])) / 4) + 1) == -1:
-                now_quota = rM.get_cfs_quota(t)
-                print("now_quota is" + str(now_quota))
-                if self.policies[t].controlConfig[t]["maximum_setups"]["cpu"] > now_quota * 1.1:
-                    if rC.cfs_quotaCut(t, 1.1) == -1:
-                        return -1
-                    else:
-                        print("relax action for:" + t + " now: " + str(rM.get_cfs_quota(t)))
+            t = self.allGroups[0]
+        else:
+            t = self.throttled_group.pop()
+        #print(self.policies[t].controlConfig[t]["maximum_setups"]["llc"])
+        if self.policies[t].controlConfig[t]["maximum_setups"]["llc"] <= self.llcM.cosLlcNum(llcM.groupCOS[t]) \
+                or self.llcM.moreLlc(llcM.groupCOS[t], int((self.policies[t].controlConfig[t]["maximum_setups"][
+                                                                "llc"] - self.llcM.cosLlcNum(
+            llcM.groupCOS[t])) / 4) + 1) == -1:
+            now_quota = rM.get_cfs_quota(t)
+            print("now_quota is" + str(now_quota))
+            if self.policies[t].controlConfig[t]["maximum_setups"]["cpu"] > now_quota * 1.1:
+                if rC.cfs_quotaCut(t, 1.1) == -1:
+                    return -1
                 else:
-                    if rC.cfs_quotaCut(t,float(self.policies[t].controlConfig[t]["maximum_setups"]["cpu"] / now_quota)) == -1:
-                        return -1
-                    else:
-                        print("relax action for:" + t + " now: " + str(rM.get_cfs_quota(t)))
-        self.throttled_group.clear()
+                    print("relax action for:" + t + " now: " + str(rM.get_cfs_quota(t)))
+            else:
+                if rC.cfs_quotaCut(t,
+                                   float(self.policies[t].controlConfig[t]["maximum_setups"]["cpu"] / now_quota)) == -1:
+                    return -1
+                else:
+                    print("relax action for:" + t + " now: " + str(rM.get_cfs_quota(t)))
 
         return 0
 
@@ -197,7 +200,7 @@ if __name__ == '__main__':
         s_f = samples
 
         controll_config = json.loads(open(args.config, 'r').read())
-        llcM = rC.cat.llcManager(4)
+        llcM = rC.cat.llcManager(5)
 
         for s in samples:
             rC.createCgroup("cpu,perf_event,cpuset", s)
@@ -225,7 +228,7 @@ if __name__ == '__main__':
         print(err)
     finally:
         print("do finally")
-        if subprocess.getstatusoutput("sudo pqos -R")[0] != 0:
+        if subprocess.getstatusoutput("sudo pqos -I -R")[0] != 0:
             print("Err: Reset llc fail")
         for s in s_f:
             pids = subprocess.getoutput("sudo cat /sys/fs/cgroup/perf_event/" + s + "/cgroup.procs").strip().split()

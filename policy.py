@@ -133,6 +133,8 @@ class Policy:
     def select_throttle_target(self):
         #print("select throttle target")
         #print(len(self.roundHistoryX))
+        if len(self.historyX) == 0:
+            return None
         curr_x = self.historyX[-1] # why not use currentInfo? because the main app don't have cycles
         basic_x = self.find_basic_x(curr_x)
         if basic_x == -1 or basic_x == None:

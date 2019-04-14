@@ -1,0 +1,4 @@
+#! /bin/bash
+cd /home/sauron/cpu2006
+. ./shrc
+runspec --config=new_x86.cfg  --size=ref --noreportable --iterations=999999999999 --tune=base lbm

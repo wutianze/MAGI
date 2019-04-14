@@ -4,37 +4,37 @@
 			"ipc":0.0
 			},
 		"minimum_setups":{
-			"cpu":80000,
-			"llc":4
+			"cpu":40000,
+			"llc":2
 			},
 		"maximum_setups":{
-			"cpu":200000,
-			"llc":8
+			"cpu":100000,
+			"llc":5
 			}
 		},
 	"xapian":{
 		"SLA":{
-			"ipc":0.26
+			"ipc":0.21
 			},
 		"minimum_setups":{
 			"cpu":40000,
-			"llc":4
+			"llc":3
 			},
 		"maximum_setups":{
-			"cpu":200000,
+			"cpu":100000,
 			"llc":8
 			}
 		},
-	"shore":{
+	"lbm":{
 		"SLA":{
-			"ipc":0.6
+			"ipc":0.0
 			},
 		"minimum_setups":{
-			"cpu":16,
-			"llc":5
+			"cpu":40000,
+			"llc":2
 			},
 		"maximum_setups":{
-			"cpu":32,
+			"cpu":100000,
 			"llc":5
 			}
 		}
