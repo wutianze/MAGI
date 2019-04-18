@@ -1,3 +1,4 @@
+import csv
 import json
 #import logging
 import argparse
@@ -68,12 +69,16 @@ class CpuController:
 
     def run(self):
         total_round = 0
-        experi_data = {}
-        for g in samples:
-            experi_data[g] = {}
-            experi_data[g]["ipc"] = []
-            experi_data[g]["cpu"] = []
-            experi_data[g]["llc"] = []
+        experi_data = []
+        dataF = open(po.es.SAVE_PATH + "data_for_plot.csv", 'w')
+        headers = []
+        for g in self.allGroups:  # allGroup should <= self.policies.keys()y
+            headers.append(g + "_ipc")
+            headers.append(g + "_cpu")
+            headers.append(g + "_llc")
+        dict_w = csv.DictWriter(dataF, headers)
+        dict_w.writeheader()
+        dataF.close()
         while True:
             if self.sleep_interval > 0:
                 time.sleep(self.sleep_interval)
@@ -82,17 +87,26 @@ class CpuController:
             sample = self.try_to_add_sample()
             if sample == -1:
                 return -1
+            tmp_data = {}
             for g in self.allGroups: # allGroup should <= self.policies.keys()y
                 self.policies[g].with_run(self.currentInfo, self.enable_training)
-                experi_data[g]["ipc"].append(self.currentInfo[g]["ipc"])
-                experi_data[g]["cpu"].append(rM.get_cfs_quota(g))
-                experi_data[g]["llc"].append(self.llcM.cosLlcNum(llcM.groupCOS[g]))
+                print(self.currentInfo[g]["ipc"])
+                print(rM.get_cfs_quota(g))
+                print(self.llcM.cosLlcNum(llcM.groupCOS[g]))
+
+                tmp_data[g + "_ipc"] = self.currentInfo[g]["ipc"]
+                tmp_data[g + "_cpu"] = rM.get_cfs_quota(g)
+                tmp_data[g + "_llc"] = self.llcM.cosLlcNum(llcM.groupCOS[g])
+            experi_data.append(tmp_data)
             self.check_cpu(sample)
             print("round in a period is:" + str(total_round))
             if total_round == STORE_PERIOD:
                 #timeNow = time.asctime(time.localtime(time.time()))
-                dataF = open("data_for_plot.txt",'w')
-                json.dump(experi_data, dataF)
+                dataF = open(po.es.SAVE_PATH + "data_for_plot.csv",'a')
+                #json.dump(experi_data, dataF)
+                dict_w = csv.DictWriter(dataF,headers)
+                dict_w.writerows(experi_data)
+                experi_data.clear()
                 dataF.close()
                 total_round = 0
             total_round += 1
@@ -116,6 +130,7 @@ class CpuController:
                 res = g
         return res
         '''
+        print("select_low_ipc_group")
         least_ipc = 9999.9
         least_group = ""
         for group in sample:
@@ -130,6 +145,7 @@ class CpuController:
 
 
     def check_cpu(self,sample):
+        print("check_cpu")
         group = self.select_low_ipc_group(sample) #sample is a list filled with groups needed to be watched
 
         if group is not None:
@@ -172,6 +188,7 @@ class CpuController:
 
     def start_cpu_throttle_analyst(self, group):
         policy = self.policies[group]
+        print("start_cpu_throttle_anaylyst")
         #if self.enable_data_driven and policy.estimator.workable():
         if self.enable_data_driven:
             policy.throttle_target_select_setup(self.throttled_group, self.llcM)

@@ -3,8 +3,8 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-STORESIZE = 1
-SAVE_PATH = ""
+STORESIZE = 5
+SAVE_PATH = "/home/sauron/MAGI/stored_data/test/"
 
 class Estimator:
     def __init__(self,accuracy, groupName, eps = 0.3, min_samples = 10):
@@ -100,6 +100,9 @@ class Estimator:
 
 
     def train(self,X,y):
+        if X.ndim < 10:
+            print("Err: No enough data for training")
+            return -1
         X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, random_state=random.randint(0,10))
         self.nn.partial_fit(X_train,y_train)
         self.curr_score = self.nn.score(X_test,y_test)
@@ -121,6 +124,7 @@ if __name__ == '__main__':
     loaded_data = datasets.load_boston()
     data_x = loaded_data.data
     data_y = loaded_data.target
+
     ss = svm.SVC(kernel='linear')
     ss.fit(data_x,data_y)
     #nn = externals.joblib.load(SAVE_PATH + "model_sta")

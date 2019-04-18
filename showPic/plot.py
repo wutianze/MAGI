@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import csv
+import pandas as pd
 def normalize(X, up):
     x = np.array(X)
     mi = x.min()
@@ -23,32 +25,48 @@ def drawTimeY(Y):
     plt.show()
 
 if __name__ == '__main__':
+    df = pd.read_csv("../stored_data/test/data_for_plot.csv")
+    df = df[["xapian_ipc","xapian_llc","xapian_cpu","mcf_ipc","mcf_llc","mcf_cpu"]]
+    # Fi = json.loads(dataF.read())
+    Fi = {}
+    Fi["xapian"] = {}
+    Fi["mcf"] = {}
+
+    Fi["xapian"]["ipc"] = df["xapian_ipc"]
+    Fi["mcf"]["ipc"] = df["mcf_ipc"]
+    Fi["xapian"]["llc"] = df["xapian_llc"]
+    Fi["mcf"]["llc"] = df["mcf_llc"]
+    Fi["xapian"]["cpu"]= df["xapian_cpu"]
+    Fi["mcf"]["cpu"] = df["mcf_cpu"]
+
+    '''
     #print(open("../data_cpu.txt",'r').read())
     dataF = open("../data_for_plot.txt",'r')
+    #dataF = open("../data_for_plot.txt", 'r')
     Fi = json.loads(dataF.read())
     dataF.close()
     Fi["xapian"]["ipc"] = [float(i) for i in Fi["xapian"]["ipc"]]
     Fi["mcf"]["ipc"] = [float(i) for i in Fi["mcf"]["ipc"]]
-    Fi["lbm"]["ipc"] = [float(i) for i in Fi["lbm"]["ipc"]]
+    #Fi["lbm"]["ipc"] = [float(i) for i in Fi["lbm"]["ipc"]]
     Fi["xapian"]["llc"] = [float(i) for i in Fi["xapian"]["llc"]]
     Fi["mcf"]["llc"] = [float(i) for i in Fi["mcf"]["llc"]]
-    Fi["lbm"]["llc"] = [float(i) for i in Fi["lbm"]["llc"]]
+    #Fi["lbm"]["llc"] = [float(i) for i in Fi["lbm"]["llc"]]
     Fi["xapian"]["cpu"] = [float(i) for i in Fi["xapian"]["cpu"]]
     Fi["mcf"]["cpu"] = [float(i) for i in Fi["mcf"]["cpu"]]
-    Fi["lbm"]["cpu"] = [float(i) for i in Fi["lbm"]["cpu"]]
-
+    #Fi["lbm"]["cpu"] = [float(i) for i in Fi["lbm"]["cpu"]]
+    '''
     ll = len(Fi["xapian"]["ipc"])
     x = np.linspace(0, ll, ll)
     sla_xapian = []
     for i in range(ll):
-        sla_xapian.append(0.21)
+        sla_xapian.append(0.14)
 
     plt.figure(1)
     plt.subplot(311)
     plt.grid(linestyle=':')
     plt.plot(x, Fi["xapian"]["ipc"], ">-", label="xapian")
     plt.plot(x, Fi["mcf"]["ipc"], ">-", label="mcf")
-    plt.plot(x, Fi["lbm"]["ipc"], ">-", label="lbm")
+    #plt.plot(x, Fi["lbm"]["ipc"], ">-", label="lbm")
     plt.plot(x, sla_xapian, "r-", label='SLA')
     plt.title("Performance of Apps")
     plt.xlabel("time")
@@ -59,7 +77,7 @@ if __name__ == '__main__':
     plt.grid(linestyle=':')
     plt.plot(x, Fi["xapian"]["llc"], ">-", label="xapian")
     plt.plot(x, Fi["mcf"]["llc"], ">-", label="mcf")
-    plt.plot(x, Fi["lbm"]["llc"], ">-", label="lbm")
+    #plt.plot(x, Fi["lbm"]["llc"], ">-", label="lbm")
     plt.title("LLC of Apps")
     plt.xlabel("time")
     plt.ylabel("llc num")
@@ -69,7 +87,7 @@ if __name__ == '__main__':
     plt.grid(linestyle=':')
     plt.plot(x, Fi["xapian"]["cpu"], ">-", label="xapian")
     plt.plot(x, Fi["mcf"]["cpu"], ">-", label="mcf")
-    plt.plot(x, Fi["lbm"]["cpu"], ">-", label="lbm")
+    #plt.plot(x, Fi["lbm"]["cpu"], ">-", label="lbm")
     plt.title("Cpu of Apps")
     plt.xlabel("time")
     plt.ylabel("cpu quota")

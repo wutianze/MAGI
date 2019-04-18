@@ -4,11 +4,11 @@ sys.path.append("..")
 import resourceMonitor as rM
 
 def getCpuInfo(pid):
-    return subprocess.getoutput('sudo pqos -t1 -I -p all:'+str(pid))
+    return subprocess.getoutput('sudo pqos -I -t1 -I -p all:'+str(pid))
 
 # cores like [0,1,2]
 def getCoresLlc(cores):
-    toHandle = subprocess.getoutput('sudo pqos -t 1 -m llc:' + ','.join([str(i) for i in cores])).strip().split('\n')
+    toHandle = subprocess.getoutput('sudo pqos -I -t 1 -m llc:' + ','.join([str(i) for i in cores])).strip().split('\n')
     res = {}
 
     for line in toHandle:
@@ -19,7 +19,7 @@ def getCoresLlc(cores):
 
 # cores like [0,1,2]
 def getCoresMbl(cores):
-    toHandle = subprocess.getoutput('sudo pqos -t 1 -m mbl:' + ','.join([str(i) for i in cores])).strip().split('\n')
+    toHandle = subprocess.getoutput('sudo pqos -I -t 1 -m mbl:' + ','.join([str(i) for i in cores])).strip().split('\n')
     res = {}
 
     for line in toHandle:

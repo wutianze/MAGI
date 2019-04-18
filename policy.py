@@ -6,8 +6,9 @@ import resourceMonitor as rM
 import numpy as np
 import math
 import json
+import csv
 
-TRAINCIRCLE = 100
+TRAINCIRCLE = 10
 
 RULEIPCBOUND = 1
 RULEMPKIBOUND = 5
@@ -15,6 +16,7 @@ RULEMEMBWBOUND = 35
 mainExTar = ["lock_loads","fp_uops","branch","l1_misses","l2_misses","stall_sb","branch_misp","machine_clear"]
 subTar = ["instructions","cycles","loads_and_stores","cache-misses"]
 
+#es.SAVE_PATH = "/home/sauron/MAGI/stored_data/xapian_mcf/"
 
 class Policy:
     def __init__(self,group,groups,control_config,accuracy):
@@ -26,40 +28,57 @@ class Policy:
         self.roundHistoryX = []
         self.roundHistoryy = []
 
-        if os.access("historyX_" + self.own + ".txt", os.F_OK) and os.access("historyy_" + self.own + ".txt", os.F_OK):
-            self.historyX = json.loads(open("historyX_" + self.own + ".txt", 'r').read())[self.own]
-            self.historyy = json.loads(open("historyy_" + self.own + ".txt", 'r').read())[self.own]
+        if os.access(es.SAVE_PATH  + "history_" + self.own + ".csv", os.F_OK) :
+            #self.historyX = json.loads(open(es.SAVE_PATH  + "historyX_" + self.own + ".txt", 'r').read())[self.own]
+            #self.historyy = json.loads(open(es.SAVE_PATH  + "historyy_" + self.own + ".txt", 'r').read())[self.own]
+            con_F = open(es.SAVE_PATH + "history_" + self.own + ".csv", "r")
+            csv_F = csv.reader(con_F)
+            trans_list = []
+            for row in csv_F:
+                trans_list.append([float(x) for x in row])
+            con_F.close()
+            self.historyX = (np.array(trans_list)[:,0:-1]).tolist()
+            self.historyy = (np.array(trans_list)[:,-1]).tolist()
+
         else:
+            print("no history data")
             self.historyX = []
             self.historyy = []
         self.count = 0
 
     def with_run(self, infoList, train_enable):
+        print("with_run")
         self.currentInfo = infoList
         X, y = self.generate_one_train_data(infoList)
         self.roundHistoryX.append(X)
         self.roundHistoryy.append(y)
         self.count += 1
-        #print(self.count)
+        print(self.count)
         if self.count == TRAINCIRCLE:
+            print("TRAIN")
             self.estimator.scaler_init(self.roundHistoryX)
             train_X, train_y = self.estimator.pre_data(self.roundHistoryX, self.roundHistoryy)
             self.historyX += train_X.tolist()
             self.historyy += train_y.tolist()
             self.roundHistoryX.clear()
             self.roundHistoryy.clear()# can store to local disk for future use
-            historyXF = open("historyX_" + self.own + ".txt", 'w')
-            historyyF = open("historyy_" + self.own + ".txt", 'w')
-            json.dump({str(self.own):self.historyX},historyXF)
-            json.dump({str(self.own):self.historyy},historyyF)
-            historyXF.close()
-            historyyF.close()
+            store_content = np.column_stack((train_X,train_y))
+            #historyXF = open(es.SAVE_PATH  + "historyX_" + self.own + ".txt", 'a')
+            #historyyF = open(es.SAVE_PATH  + "historyy_" + self.own + ".txt", 'a')
+            historyF = open(es.SAVE_PATH + "history_" + self.own + ".csv", 'a')
+            csv.writer(historyF).writerows(store_content)
+            #csv.writer(historyyF).writerows(self.historyy)
+            #json.dump({str(self.own):self.historyX},historyXF)
+            #json.dump({str(self.own):self.historyy},historyyF)
+            #historyXF.close()
+            historyF.close()
             self.count = 0
             if train_enable:
                 self.estimator.train(np.array(self.historyX), np.array(self.historyy))
 
 
     def generate_one_train_data(self, infoList):
+        print("generate_one_train_data")
         train_X = []
         for tar in subTar:
             if tar != "cycles":
@@ -229,9 +248,10 @@ class Policy:
 
     # RULE Model
     def rule_update(self, throttled_group, llcM):
-        #boundPart = rM.pmu.topDownGroup(self.own)# self.own is like "app1"
-        boundPart = ""
         curGI = self.currentInfo[self.own]
+        #boundPart = rM.pmu.topDownGroupCal(curGI)
+        boundPart = ""
+
         badGroup = ""
         print("Now self.own = " + self.own)
         if boundPart == "Backend_Bound":
