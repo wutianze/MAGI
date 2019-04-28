@@ -249,9 +249,9 @@ class Policy:
     # RULE Model
     def rule_update(self, throttled_group, llcM):
         curGI = self.currentInfo[self.own]
-        #boundPart = rM.pmu.topDownGroupCal(curGI)
-        boundPart = ""
-
+        boundPart = rM.pmu.topDownGroupCal(curGI)
+        #boundPart = ""
+        print("Info: boundPart is:" + boundPart)
         badGroup = ""
         print("Now self.own = " + self.own)
         if boundPart == "Backend_Bound":

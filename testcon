@@ -25,6 +25,19 @@
 			"llc":8
 			}
 		},
+		"memcached":{
+		"SLA":{
+			"ipc":-1.0
+			},
+		"minimum_setups":{
+			"cpu":40000,
+			"llc":3
+			},
+		"maximum_setups":{
+			"cpu":100000,
+			"llc":12
+			}
+		},
 	"lbm":{
 		"SLA":{
 			"ipc":0.0
