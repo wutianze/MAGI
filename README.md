@@ -2,9 +2,7 @@
 # work to do:
   - 更多的测试
 # working on:  
-  - pmu指标获取
-  - pmu bound计算
-  - xapian修改获取实时latency
+  - xapian修改获取实时latency：在harness/client.cpp中Client::finiReq的sjrn代表了实时的延迟
 # work finished:
   - 基础环境搭建
   - 应用数据采集/所需数据种类工具调研
