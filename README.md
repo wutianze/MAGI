@@ -24,7 +24,8 @@
   - 命令行参数指定
   - estimater里指定数据保存文件夹
   - policy里指定每隔多少轮尝试训练
-  - main里设置每隔多少轮记录一次运行时数据
+  - main里设置每隔多少轮记录一次运行时数据，可用的核的编号
+  - resourceControl里设置当前cache llc数量
   
 # test init
   - configs.sh中变量设置
