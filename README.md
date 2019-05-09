@@ -2,9 +2,8 @@
 # work to do:
   - 更多的测试
 # working on:  
-  - pmu指标获取
-  - pmu bound计算
-  - xapian修改获取实时latency
+  - 模型优化，探索能使准确率上升的办法
+  - xapian修改获取实时latency：在harness/client.cpp中Client::finiReq的sjrn代表了实时的延迟
 # work finished:
   - 基础环境搭建
   - 应用数据采集/所需数据种类工具调研
@@ -21,6 +20,13 @@
     - git clone下来之后会提示echo...必须su执行
     - 须根据实际机器更改代码中判断有效行的条件
 
+# MAGI运行参数设置
+  - 命令行参数指定
+  - estimater里指定数据保存文件夹
+  - policy里指定每隔多少轮尝试训练
+  - main里设置每隔多少轮记录一次运行时数据，可用的核的编号
+  - resourceControl里设置当前cache llc数量
+  
 # test init
   - configs.sh中变量设置
   - xapian
@@ -32,5 +38,8 @@
 控制运行时间：有两个变量TBENCH_MAXREQS和-r，client会一直运行发送请求直到server发送finish信号，而server就是到TBENCH_MAXREQS+TBENCH_WARMUP会发信号。server会在所有client都结束后自动结束，而-r的设置相当于另外给了一个server处理请求的上限，到达这个值即使还有client那server也还是会结束。
 本次实验直接将-r设置成无穷大即可。
 
+# memcached usage
+很麻烦，需要手动开memaslap，先load，再run，目前不清楚原因为什么用sh开会报错
+
 # problems found now (* for not solved)
-  - * accuracy一直提不上去
+  - \* accuracy一直提不上去
