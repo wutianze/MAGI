@@ -21,7 +21,7 @@ def run_com(cmd,flag):
         print(subprocess.getoutput("sudo " + cmd))
             #print("Err: Start or Running help shell Fail")
     else:
-        print(subprocess.getstatusoutput(cmd))
+        print(subprocess.getoutput(cmd))
             #print("Err: Start or Running help shell Fail")
 
 
