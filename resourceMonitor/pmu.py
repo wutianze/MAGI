@@ -10,7 +10,7 @@ def topDownGroupCal(currentInfo):
     bounds["Frontend_Bound"] = currentInfo["idq_uops_not_delivered.core"] / (4 * currentInfo["cycles"])
     bounds["Bad_Speculation"] = (currentInfo["uops_issued.any"] - currentInfo["uops_retired.retire_slots"] + 4 * currentInfo["int_misc.recovery_cycles"]) / (4 * currentInfo["cycles"])
     bounds["Retiring"] = currentInfo["uops_retired.retire_slots"] / (4 * currentInfo["cycles"])
-    bounds["Backend_Bound "] = 1 - bounds["Frontend_Bound"] - bounds["Bad_Speculation"] - bounds["Retiring"]
+    bounds["Backend_Bound"] = 1 - bounds["Frontend_Bound"] - bounds["Bad_Speculation"] - bounds["Retiring"]
     return max(bounds, key=bounds.get)
     #return boundName
     #return "Backend_Bound"

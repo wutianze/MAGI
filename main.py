@@ -12,13 +12,17 @@ from multiprocessing import Process
 
 avaCpus = {8,9,10}
 
-STORE_PERIOD = 40
+STORE_PERIOD = 100
 
 
-def new_help(cmd):
+def run_com(cmd,flag):
     #print()
-    if subprocess.getstatusoutput("sudo " + cmd)[0] != 0:
-        print("Err: Start or Running help shell Fail")
+    if(flag):
+        print(subprocess.getoutput("sudo " + cmd))
+            #print("Err: Start or Running help shell Fail")
+    else:
+        print(subprocess.getstatusoutput(cmd))
+            #print("Err: Start or Running help shell Fail")
 
 
 class CpuController:
@@ -208,7 +212,7 @@ if __name__ == '__main__':
         parser.add_argument('--enable-data-driven')
         parser.add_argument('--samples', type=str, default="",
                             help="the groups needed to control")  # here the groups shouldn't be full path,ex: app1 not /cpu/app1
-        parser.add_argument('--accuracy', type=float, default=0.3, help="the threshold of model's accuracy")
+        parser.add_argument('--accuracy', type=float, default=0.5, help="the threshold of model's accuracy")
         parser.add_argument('--sample-length', type=int, default=4,
                             help="how many seconds the sampling measurement should cover")
         parser.add_argument('--sleep', type=int, default=2, help="pause sleep seconds between each round")
@@ -229,11 +233,12 @@ if __name__ == '__main__':
             time.sleep(1)
             if s == "xapian":
                 cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
-                newP = Process(target=new_help, args=cli_cmd)
+                newP = Process(target=run_com, args=(cli_cmd,True))
                 newP.start()
             if s == "memcached":
+                time.sleep(5)
                 cli_cmd = {'/home/sauron/MAGI/run_ycsb_memcached'}
-                newP = Process(target=new_help, args=cli_cmd)
+                newP = Process(target=run_com, args=(cli_cmd,False))
                 newP.start()
 
             # initial period is 100000, give app the maximum

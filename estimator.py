@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 STORESIZE = 5
-SAVE_PATH = "/home/sauron/MAGI/stored_data/test/"
+SAVE_PATH = "/home/sauron/MAGI/stored_data/memcached_mcf/"
 
 class Estimator:
     def __init__(self,accuracy, groupName, eps = 0.3, min_samples = 10):
@@ -14,7 +14,7 @@ class Estimator:
             self.load_model("model_" + groupName)
         else:
             print("load fail,new a model")
-            self.nn = neural_network.MLPRegressor()
+            self.nn = neural_network.MLPRegressor(alpha=0.0001,max_iter=1000,tol=1e-5,activation='tanh',learning_rate_init=0.001,hidden_layer_sizes=(30,),random_state=1)
 
         self.svm = svm.SVC(kernel='linear')
         self.accuracy_demand = accuracy
@@ -100,7 +100,7 @@ class Estimator:
 
 
     def train(self,X,y):
-        if X.ndim < 10:
+        if X.shape[0] < 20:
             print("Err: No enough data for training")
             return -1
         X_train, X_test, y_train, y_test = model_selection.train_test_split(X, y, random_state=random.randint(0,10))

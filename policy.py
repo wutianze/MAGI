@@ -8,7 +8,7 @@ import math
 import json
 import csv
 
-TRAINCIRCLE = 10
+TRAINCIRCLE = 20
 
 RULEIPCBOUND = 1
 RULEMPKIBOUND = 5
@@ -253,9 +253,10 @@ class Policy:
         #boundPart = ""
         print("Info: boundPart is:" + boundPart)
         badGroup = ""
-        print("Now self.own = " + self.own)
+        #print("Now self.own = " + self.own)
         if boundPart == "Backend_Bound":
             # memory-bound
+            print("In Backend_bound")
             if float(curGI["ipc"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
                 # llc-bound
                 if float(rM.cat.getGroupsSumMbl(self.own))/1024.0 < RULEMEMBWBOUND:
