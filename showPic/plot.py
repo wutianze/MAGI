@@ -25,49 +25,33 @@ def drawTimeY(Y):
     plt.show()
 
 if __name__ == '__main__':
-    df = pd.read_csv("../stored_data/test/data_for_plot.csv")
-    df = df[["xapian_ipc","xapian_llc","xapian_cpu","mcf_ipc","mcf_llc","mcf_cpu"]]
+    df = pd.read_csv("../stored_data/memcached_mcf_lbm/data_for_plot.csv")
+    df = df[["memcached_ipc","memcached_llc","memcached_cpu","mcf_ipc","mcf_llc","mcf_cpu"]]
     # Fi = json.loads(dataF.read())
     Fi = {}
-    Fi["xapian"] = {}
+    Fi["memcached"] = {}
     Fi["mcf"] = {}
 
-    Fi["xapian"]["ipc"] = df["xapian_ipc"]
+    Fi["memcached"]["ipc"] = df["memcached_ipc"]
     Fi["mcf"]["ipc"] = df["mcf_ipc"]
-    Fi["xapian"]["llc"] = df["xapian_llc"]
+    Fi["memcached"]["llc"] = df["memcached_llc"]
     Fi["mcf"]["llc"] = df["mcf_llc"]
-    Fi["xapian"]["cpu"]= df["xapian_cpu"]
+    Fi["memcached"]["cpu"]= df["memcached_cpu"]
     Fi["mcf"]["cpu"] = df["mcf_cpu"]
 
-    '''
-    #print(open("../data_cpu.txt",'r').read())
-    dataF = open("../data_for_plot.txt",'r')
-    #dataF = open("../data_for_plot.txt", 'r')
-    Fi = json.loads(dataF.read())
-    dataF.close()
-    Fi["xapian"]["ipc"] = [float(i) for i in Fi["xapian"]["ipc"]]
-    Fi["mcf"]["ipc"] = [float(i) for i in Fi["mcf"]["ipc"]]
-    #Fi["lbm"]["ipc"] = [float(i) for i in Fi["lbm"]["ipc"]]
-    Fi["xapian"]["llc"] = [float(i) for i in Fi["xapian"]["llc"]]
-    Fi["mcf"]["llc"] = [float(i) for i in Fi["mcf"]["llc"]]
-    #Fi["lbm"]["llc"] = [float(i) for i in Fi["lbm"]["llc"]]
-    Fi["xapian"]["cpu"] = [float(i) for i in Fi["xapian"]["cpu"]]
-    Fi["mcf"]["cpu"] = [float(i) for i in Fi["mcf"]["cpu"]]
-    #Fi["lbm"]["cpu"] = [float(i) for i in Fi["lbm"]["cpu"]]
-    '''
-    ll = len(Fi["xapian"]["ipc"])
+    ll = len(Fi["memcached"]["ipc"])
     x = np.linspace(0, ll, ll)
-    sla_xapian = []
+    sla_memcached = []
     for i in range(ll):
-        sla_xapian.append(0.14)
+        sla_memcached.append(0.14)
 
     plt.figure(1)
     plt.subplot(311)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["xapian"]["ipc"], ">-", label="xapian")
+    plt.plot(x, Fi["memcached"]["ipc"], ">-", label="memcached")
     plt.plot(x, Fi["mcf"]["ipc"], ">-", label="mcf")
     #plt.plot(x, Fi["lbm"]["ipc"], ">-", label="lbm")
-    plt.plot(x, sla_xapian, "r-", label='SLA')
+    plt.plot(x, sla_memcached, "r-", label='SLA')
     plt.title("Performance of Apps")
     plt.xlabel("time")
     plt.ylabel("ipc")
@@ -75,7 +59,7 @@ if __name__ == '__main__':
 
     plt.subplot(312)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["xapian"]["llc"], ">-", label="xapian")
+    plt.plot(x, Fi["memcached"]["llc"], ">-", label="memcached")
     plt.plot(x, Fi["mcf"]["llc"], ">-", label="mcf")
     #plt.plot(x, Fi["lbm"]["llc"], ">-", label="lbm")
     plt.title("LLC of Apps")
@@ -85,7 +69,7 @@ if __name__ == '__main__':
 
     plt.subplot(313)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["xapian"]["cpu"], ">-", label="xapian")
+    plt.plot(x, Fi["memcached"]["cpu"], ">-", label="memcached")
     plt.plot(x, Fi["mcf"]["cpu"], ">-", label="mcf")
     #plt.plot(x, Fi["lbm"]["cpu"], ">-", label="lbm")
     plt.title("Cpu of Apps")
@@ -95,9 +79,9 @@ if __name__ == '__main__':
     '''
     plt.figure(1)
     plt.grid(linestyle=':')
-    plt.plot(x,Fi["xapian"]["ipc"],">-",label="xapian")
+    plt.plot(x,Fi["memcached"]["ipc"],">-",label="memcached")
     plt.plot(x,Fi["mcf"]["ipc"],">-",label="mcf")
-    plt.plot(x,sla_xapian,"r-",label='SLA')
+    plt.plot(x,sla_memcached,"r-",label='SLA')
     plt.title("Performance of Apps")
     plt.xlabel("time")
     plt.ylabel("ipc")
@@ -105,7 +89,7 @@ if __name__ == '__main__':
 
     plt.figure(2)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["xapian"]["llc"], ">-",label="xapian")
+    plt.plot(x, Fi["memcached"]["llc"], ">-",label="memcached")
     plt.plot(x, Fi["mcf"]["llc"], ">-",label="mcf")
     plt.title("LLC of Apps")
     plt.xlabel("time")
@@ -114,11 +98,11 @@ if __name__ == '__main__':
 
     plt.figure(3)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["xapian"]["ipc"], ">-",label="ipc")
-    plt.plot(x, sla_xapian, label='SLA')
-    plt.plot(x, normalize(Fi["xapian"]["llc"],0.4),">-", label="llc")
-    plt.plot(x, normalize(Fi["xapian"]["cpu"],0.4), ">-",label="cpu")
-    plt.title("Xapian")
+    plt.plot(x, Fi["memcached"]["ipc"], ">-",label="ipc")
+    plt.plot(x, sla_memcached, label='SLA')
+    plt.plot(x, normalize(Fi["memcached"]["llc"],0.4),">-", label="llc")
+    plt.plot(x, normalize(Fi["memcached"]["cpu"],0.4), ">-",label="cpu")
+    plt.title("memcached")
     plt.xlabel("time")
     plt.ylabel("normalized data")
     plt.legend(loc='best')
@@ -135,11 +119,11 @@ if __name__ == '__main__':
 
     plt.figure(5)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["xapian"]["ipc"], ">-",label="Fi["xapian"]["ipc"]")
+    plt.plot(x, Fi["memcached"]["ipc"], ">-",label="Fi["memcached"]["ipc"]")
     plt.plot(x, normalize(Fi["mcf"]["llc"],0.4), ">-",label="Fi["mcf"]["llc"]")
-    plt.plot(x, sla_xapian, label='SLA')
+    plt.plot(x, sla_memcached, label='SLA')
     plt.plot(x, normalize(Fi["mcf"]["cpu"],0.4),">-", label='Fi["mcf"]["cpu"]')
-    plt.title("Xapian\'s SLA with mcf resource")
+    plt.title("memcached\'s SLA with mcf resource")
     plt.xlabel("time")
     plt.ylabel("normalized data")
     plt.legend(loc='best')

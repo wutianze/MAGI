@@ -91,7 +91,7 @@ if __name__ == '__main__':
             rC.startProcs("perf_event,cpuset", s2, "/home/sauron/MAGI/run_" + s2)
 
         elif control == 4:
-            s_f = ["memcached"]
+            s_f = [s1,s4,s2]
 
             #rC.createCgroup("perf_event", s1)
             #rC.cpusSet(avaCpus.pop(), s1)
@@ -99,16 +99,22 @@ if __name__ == '__main__':
             #rC.startProcs("perf_event", s1, "/home/sauron/MAGI/run_" + s1)
 
             #time.sleep(3)
-            #rC.createCgroup("perf_event", s2)
-            #rC.cpusSet(avaCpus.pop(), s2)
-            #rC.cpusetMemsSet(0, s2)
-            #rC.startProcs("perf_event", s2, "/home/sauron/MAGI/run_" + s2)
+            '''
+            rC.createCgroup("perf_event,cpu,cpuset", s1)
+            rC.cpusSet(avaCpus.pop(), s1)
+            rC.cpusetMemsSet(0, s1)
+            rC.startProcs("perf_event,cpu,cpuset", s1, "/home/sauron/MAGI/run_" + s1)
 
+            rC.createCgroup("perf_event,cpu,cpuset", s2)
+            rC.cpusSet(avaCpus.pop(), s2)
+            rC.cpusetMemsSet(0, s2)
+            rC.startProcs("perf_event,cpu,cpuset", s2, "/home/sauron/MAGI/run_" + s2)
+'''
             rC.createCgroup("perf_event,cpu,cpuset", s4)
             rC.cpusSet(avaCpus.pop(), s4)
             rC.cpusetMemsSet(0, s4)
             rC.startProcs("perf_event,cpu,cpuset", s4, "/home/sauron/MAGI/run_" + s4)
-            time.sleep(3)
+            #time.sleep(3)
 
             # initial period is 100000, give app the maximum
 

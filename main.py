@@ -17,12 +17,25 @@ STORE_PERIOD = 100
 
 def run_com(cmd,flag):
     #print()
-    if(flag):
-        print(subprocess.getoutput("sudo " + cmd))
-            #print("Err: Start or Running help shell Fail")
-    else:
-        print(subprocess.getoutput(cmd))
-            #print("Err: Start or Running help shell Fail")
+    while(True):
+        tmpLog = ""
+        if (flag):
+            tmpLog = subprocess.getoutput("sudo " + cmd)
+            #raise KeyboardInterrupt
+            # print("Err: Start or Running help shell Fail")
+        else:
+            tmpLog = subprocess.getoutput(cmd)
+            #raise KeyboardInterrupt
+            # print("Err: Start or Running help shell Fail")
+        logF = open(po.es.SAVE_PATH + "command_log_" + cmd, 'a')
+        logF.write(time.asctime(time.localtime(time.time())))
+        logF.write(tmpLog)
+        # csv.writer(historyyF).writerows(self.historyy)
+        # json.dump({str(self.own):self.historyX},historyXF)
+        # json.dump({str(self.own):self.historyy},historyyF)
+        # historyXF.close()
+        logF.close()
+
 
 
 class CpuController:
@@ -60,14 +73,14 @@ class CpuController:
             check_live += 1
             tmp_info = rM.perf.getAllInfo(self.allGroups, self.sample_len)
         self.currentInfo = tmp_info
-        print("get currentInfo")
+        #print("get currentInfo")
         samples = []
         for group in self.currentInfo.keys():
             # now the sla depends on ipc=instructions/cycles
             if float(self.currentInfo[group]["ipc"]) < float(self.policies[group].controlConfig[group]["SLA"]["ipc"]):
                 samples.append(group)
-        print("can return samples")
-        #TODO:sava the currentInfo for future use
+        #print("can return samples")
+
         return samples
 
 
@@ -235,11 +248,13 @@ if __name__ == '__main__':
                 cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
                 newP = Process(target=run_com, args=(cli_cmd,True))
                 newP.start()
+
             if s == "memcached":
                 time.sleep(5)
                 cli_cmd = {'/home/sauron/MAGI/run_ycsb_memcached'}
                 newP = Process(target=run_com, args=(cli_cmd,False))
                 newP.start()
+
 
             # initial period is 100000, give app the maximum
             rC.cfs_quotaSet(s, int((controll_config[s]["maximum_setups"]["cpu"] + controll_config[s]["minimum_setups"]["cpu"]) / 2))
