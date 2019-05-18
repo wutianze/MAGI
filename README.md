@@ -39,7 +39,8 @@
 本次实验直接将-r设置成无穷大即可。
 
 # memcached usage
-很麻烦，需要手动开memaslap，先load，再run，目前不清楚原因为什么用sh开会报错
+使用ycsb来压测，注意它和xapian一样，不提供压力，ipc就是0.
+ycsb使用时要注意，load动作的recordcount不知道为什么不能在命令行指定，必须要在配置的workload\*文件里指定，而run动作的operationcount可以在命令行里指定。
 
 # problems found now (* for not solved)
-  - \* accuracy一直提不上去
+  - \* accuracy一直提不上去，目前对于xapian来说是0.3-0.4左右，对mcf是0.8左右。
