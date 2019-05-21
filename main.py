@@ -19,15 +19,18 @@ def run_com(cmd,flag):
     #print()
     while(True):
         tmpLog = ""
+        cmdS = cmd.pop()
         if (flag):
-            tmpLog = subprocess.getoutput("sudo " + cmd)
+            tmpLog = subprocess.getoutput("sudo " + cmdS)
+            print(tmpLog)
             #raise KeyboardInterrupt
             # print("Err: Start or Running help shell Fail")
         else:
-            tmpLog = subprocess.getoutput(cmd)
+            tmpLog = subprocess.getoutput(cmdS)
+            print(tmpLog)
             #raise KeyboardInterrupt
             # print("Err: Start or Running help shell Fail")
-        logF = open(po.es.SAVE_PATH + "command_log_" + cmd, 'a')
+        logF = open(po.es.SAVE_PATH + "command_log_" + cmdS.split('/')[-1], 'a')
         logF.write(time.asctime(time.localtime(time.time())))
         logF.write(tmpLog)
         # csv.writer(historyyF).writerows(self.historyy)
@@ -35,6 +38,7 @@ def run_com(cmd,flag):
         # json.dump({str(self.own):self.historyy},historyyF)
         # historyXF.close()
         logF.close()
+        cmd.add(cmdS)
 
 
 
@@ -107,16 +111,16 @@ class CpuController:
             tmp_data = {}
             for g in self.allGroups: # allGroup should <= self.policies.keys()y
                 self.policies[g].with_run(self.currentInfo, self.enable_training)
-                print(self.currentInfo[g]["ipc"])
-                print(rM.get_cfs_quota(g))
-                print(self.llcM.cosLlcNum(llcM.groupCOS[g]))
+                #print(self.currentInfo[g]["ipc"])
+                #print(rM.get_cfs_quota(g))
+                #print(self.llcM.cosLlcNum(llcM.groupCOS[g]))
 
                 tmp_data[g + "_ipc"] = self.currentInfo[g]["ipc"]
                 tmp_data[g + "_cpu"] = rM.get_cfs_quota(g)
                 tmp_data[g + "_llc"] = self.llcM.cosLlcNum(llcM.groupCOS[g])
             experi_data.append(tmp_data)
             self.check_cpu(sample)
-            print("round in a period is:" + str(total_round))
+            #print("round in a period is:" + str(total_round))
             if total_round == STORE_PERIOD:
                 #timeNow = time.asctime(time.localtime(time.time()))
                 dataF = open(po.es.SAVE_PATH + "data_for_plot.csv",'a')
@@ -147,7 +151,7 @@ class CpuController:
                 res = g
         return res
         '''
-        print("select_low_ipc_group")
+        #print("select_low_ipc_group")
         least_ipc = 9999.9
         least_group = ""
         for group in sample:
@@ -163,7 +167,7 @@ class CpuController:
 
 
     def check_cpu(self,sample):
-        print("check_cpu")
+        #print("check_cpu")
         group = self.select_low_ipc_group(sample) #sample is a list filled with groups needed to be watched
 
         if group is not None:
@@ -176,7 +180,7 @@ class CpuController:
 
 
     def start_cpu_relax_analyst(self):
-        print("start_cpu_relax_analyst")
+        #print("start_cpu_relax_analyst")
         t = ""
         if len(self.throttled_group) == 0:
             t = random.choice(self.allGroups)
@@ -188,7 +192,7 @@ class CpuController:
                                                                 "llc"] - self.llcM.cosLlcNum(
             llcM.groupCOS[t])) / 4) + 1) == -1:
             now_quota = rM.get_cfs_quota(t)
-            print("now_quota is" + str(now_quota))
+            #print("now_quota is" + str(now_quota))
             if self.policies[t].controlConfig[t]["maximum_setups"]["cpu"] > now_quota * 1.1:
                 if rC.cfs_quotaCut(t, 1.1) == -1:
                     return -1
@@ -206,7 +210,7 @@ class CpuController:
 
     def start_cpu_throttle_analyst(self, group):
         policy = self.policies[group]
-        print("start_cpu_throttle_anaylyst")
+        #print("start_cpu_throttle_anaylyst")
         #if self.enable_data_driven and policy.estimator.workable():
         if self.enable_data_driven:
             policy.throttle_target_select_setup(self.throttled_group, self.llcM)

@@ -47,13 +47,13 @@ class Policy:
         self.count = 0
 
     def with_run(self, infoList, train_enable):
-        print("with_run")
+        #print("with_run")
         self.currentInfo = infoList
         X, y = self.generate_one_train_data(infoList)
         self.roundHistoryX.append(X)
         self.roundHistoryy.append(y)
         self.count += 1
-        print(self.count)
+        #print(self.count)
         if self.count == TRAINCIRCLE:
             print("TRAIN")
             self.estimator.scaler_init(self.roundHistoryX)
@@ -78,7 +78,7 @@ class Policy:
 
 
     def generate_one_train_data(self, infoList):
-        print("generate_one_train_data")
+        #print("generate_one_train_data")
         train_X = []
         for tar in subTar:
             if tar != "cycles":
@@ -233,7 +233,7 @@ class Policy:
 
 
     def throttle_target_select_setup(self, throttled_group, llcM):
-        print("throttle_target_select_setup")
+        #print("throttle_target_select_setup")
         badGroup = self.select_throttle_target()
         if badGroup == None or badGroup == "":
             # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
@@ -251,12 +251,12 @@ class Policy:
         curGI = self.currentInfo[self.own]
         boundPart = rM.pmu.topDownGroupCal(curGI)
         #boundPart = ""
-        print("Info: boundPart is:" + boundPart)
+        #print("Info: boundPart is:" + boundPart)
         badGroup = ""
         #print("Now self.own = " + self.own)
         if boundPart == "Backend_Bound":
             # memory-bound
-            print("In Backend_bound")
+            #print("In Backend_bound")
             if float(curGI["ipc"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
                 # llc-bound
                 if float(rM.cat.getGroupsSumMbl(self.own))/1024.0 < RULEMEMBWBOUND:
