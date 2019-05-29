@@ -14,6 +14,7 @@
 # project init
   - 各种检测工具都需要sudo
   - pqos工具安装
+    - kernel版本需要注意，要4.10以上才能支持os iface上的一些特性，而且需要在config里修改RDT对应项。
     - resourceControll中常量值须根据实际机器修改
   - perf工具安装
   - pmu工具安装
