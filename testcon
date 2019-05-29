@@ -25,6 +25,19 @@
 			"llc":9
 			}
 		},
+		"sphinx":{
+		"SLA":{
+			"ipc":0.14
+			},
+		"minimum_setups":{
+			"cpu":40000,
+			"llc":3
+			},
+		"maximum_setups":{
+			"cpu":100000,
+			"llc":9
+			}
+		},
 	"memcached":{
 		"SLA":{
 			"ipc":0.12

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 STORESIZE = 5
-SAVE_PATH = "/home/sauron/MAGI/stored_data/memcached_mcf_lbm/"
+SAVE_PATH = "/home/sauron/MAGI/stored_data/sphinx_mcf/"
 
 class Estimator:
     def __init__(self,accuracy, groupName, eps = 0.3, min_samples = 10):

@@ -27,6 +27,7 @@ class Policy:
         self.currentInfo = {}
         self.roundHistoryX = []
         self.roundHistoryy = []
+        #self.sla = control_config[group]["SLA"]["ipc"]
 
         if os.access(es.SAVE_PATH  + "history_" + self.own + ".csv", os.F_OK) :
             #self.historyX = json.loads(open(es.SAVE_PATH  + "historyX_" + self.own + ".txt", 'r').read())[self.own]
@@ -130,9 +131,9 @@ class Policy:
         return dist * (1.0 + std_entropy)
 
 
-    def find_basic_x(self, curr_x):
+    def find_basic_x(self, curr_x,sla):
         #print("find_basic_x")
-        small_set = self.estimator.find_sv_statisfy_v(self.historyX, self.historyy, float(self.controlConfig[self.own]["SLA"]["ipc"]))
+        small_set = self.estimator.find_sv_statisfy_v(self.historyX, self.historyy, sla)
         if small_set == -1:
             return -1
         basic_x = None
@@ -149,13 +150,13 @@ class Policy:
 
 
 
-    def select_throttle_target(self):
+    def select_throttle_target(self,sla):
         #print("select throttle target")
         #print(len(self.roundHistoryX))
         if len(self.historyX) == 0:
             return None
         curr_x = self.historyX[-1] # why not use currentInfo? because the main app don't have cycles
-        basic_x = self.find_basic_x(curr_x)
+        basic_x = self.find_basic_x(curr_x,sla)
         if basic_x == -1 or basic_x == None:
             return None
         base_ipc = self.estimator.inference(basic_x)
@@ -232,7 +233,7 @@ class Policy:
         return 0
 
 
-    def throttle_target_select_setup(self, throttled_group, llcM):
+    def throttle_target_select_setup(self, throttled_group, llcM,sla):
         #print("throttle_target_select_setup")
         badGroup = self.select_throttle_target()
         if badGroup == None or badGroup == "":

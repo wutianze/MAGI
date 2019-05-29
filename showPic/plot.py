@@ -25,33 +25,50 @@ def drawTimeY(Y):
     plt.show()
 
 if __name__ == '__main__':
-    df = pd.read_csv("../stored_data/memcached_mcf_lbm/data_for_plot.csv")
-    df = df[["memcached_ipc","memcached_llc","memcached_cpu","mcf_ipc","mcf_llc","mcf_cpu"]]
-    # Fi = json.loads(dataF.read())
-    Fi = {}
-    Fi["memcached"] = {}
-    Fi["mcf"] = {}
+    apps = ["sphinx","mcf"]
+    fileName = "../stored_data/"
+    appResources = []
+    #Fi = {}
+    for a in apps:
+        fileName = fileName + a +'_'
+        appResources.append(a+"_ipc")
+        appResources.append(a + "_llc")
+        appResources.append(a + "_cpu")
+        appResources.append(a + "_sla")
+        #Fi[a] = {}
+    fileName = fileName[:-1]
+    fileName += "/data_for_plot.csv"
+    df = pd.read_csv(fileName)
 
+    df = df[appResources]
+    # Fi = json.loads(dataF.read())
+
+    '''
     Fi["memcached"]["ipc"] = df["memcached_ipc"]
     Fi["mcf"]["ipc"] = df["mcf_ipc"]
+    Fi["lbm"]["ipc"] = df["lbm_ipc"]
     Fi["memcached"]["llc"] = df["memcached_llc"]
     Fi["mcf"]["llc"] = df["mcf_llc"]
+    Fi["lbm"]["llc"] = df["lbm_llc"]
     Fi["memcached"]["cpu"]= df["memcached_cpu"]
     Fi["mcf"]["cpu"] = df["mcf_cpu"]
-
-    ll = len(Fi["memcached"]["ipc"])
+    Fi["lbm"]["cpu"] = df["lbm_cpu"]
+    Fi["memcached"]["sla"] = df["memcached_sla"]
+    Fi["mcf"]["sla"] = df["mcf_sla"]
+    Fi["lbm"]["sla"] = df["lbm_sla"]
+    '''
+    ll = len(df[apps[0]+"_ipc"])
     x = np.linspace(0, ll, ll)
-    sla_memcached = []
-    for i in range(ll):
-        sla_memcached.append(0.14)
+    #sla_memcached = []
+    #for i in range(ll):
+    #   sla_memcached.append(0.14)
 
     plt.figure(1)
     plt.subplot(311)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["memcached"]["ipc"], ">-", label="memcached")
-    plt.plot(x, Fi["mcf"]["ipc"], ">-", label="mcf")
-    #plt.plot(x, Fi["lbm"]["ipc"], ">-", label="lbm")
-    plt.plot(x, sla_memcached, "r-", label='SLA')
+    for a in apps:
+        plt.plot(x, df[a+"_ipc"], ">-", label=a)
+    #plt.plot(x, Fi["memcached"]["sla"], "r-", label='SLA')
     plt.title("Performance of Apps")
     plt.xlabel("time")
     plt.ylabel("ipc")
@@ -59,8 +76,8 @@ if __name__ == '__main__':
 
     plt.subplot(312)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["memcached"]["llc"], ">-", label="memcached")
-    plt.plot(x, Fi["mcf"]["llc"], ">-", label="mcf")
+    for a in apps:
+        plt.plot(x, df[a + "_llc"], ">-", label=a)
     #plt.plot(x, Fi["lbm"]["llc"], ">-", label="lbm")
     plt.title("LLC of Apps")
     plt.xlabel("time")
@@ -69,8 +86,8 @@ if __name__ == '__main__':
 
     plt.subplot(313)
     plt.grid(linestyle=':')
-    plt.plot(x, Fi["memcached"]["cpu"], ">-", label="memcached")
-    plt.plot(x, Fi["mcf"]["cpu"], ">-", label="mcf")
+    for a in apps:
+        plt.plot(x, df[a + "_cpu"], ">-", label=a)
     #plt.plot(x, Fi["lbm"]["cpu"], ">-", label="lbm")
     plt.title("Cpu of Apps")
     plt.xlabel("time")

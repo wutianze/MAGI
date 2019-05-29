@@ -43,18 +43,23 @@ def run_com(cmd,flag):
 
 
 class CpuController:
-    def __init__(self, controll_config, samples, en_data, en_train, accuracy, sleep_interval, sample_len, llcM):
+    def __init__(self, controll_config, samples, en_data, en_train, en_auto_sla,accuracy, sleep_interval, sample_len, llcM):
         #self.logging.basicConfig('logger.log',logging.INFO)
         #self.logger = logging.getLogger('example1')
         self.enable_data_driven = en_data
         self.enable_training = en_train
+        self.enable_auto_sla = en_auto_sla
         self.sleep_interval = sleep_interval
         self.allGroups = samples# ["app1","app2"]
         self.sample_len = sample_len
+        self.controlConfig = controll_config
+        self.slas = {}
+
 
         self.policies = {}
         for g in samples:
             self.policies[g] = po.Policy(g, self.allGroups, controll_config, accuracy)
+            self.slas[g] = controll_config[g]["SLA"]["ipc"]
 
         self.currentInfo = {}
         self.llcM = llcM
@@ -81,8 +86,10 @@ class CpuController:
         samples = []
         for group in self.currentInfo.keys():
             # now the sla depends on ipc=instructions/cycles
-            if float(self.currentInfo[group]["ipc"]) < float(self.policies[group].controlConfig[group]["SLA"]["ipc"]):
+            if float(self.currentInfo[group]["ipc"]) < self.slas[group]:
                 samples.append(group)
+            if self.enable_auto_sla:
+                self.slas[group] = self.slas[group] * 0.4 + float(self.currentInfo[group]["ipc"]) * 0.1 + float(self.controlConfig[group]["SLA"]["ipc"]) * 0.5
         #print("can return samples")
 
         return samples
@@ -97,6 +104,7 @@ class CpuController:
             headers.append(g + "_ipc")
             headers.append(g + "_cpu")
             headers.append(g + "_llc")
+            headers.append(g + "_sla")
         dict_w = csv.DictWriter(dataF, headers)
         dict_w.writeheader()
         dataF.close()
@@ -118,6 +126,7 @@ class CpuController:
                 tmp_data[g + "_ipc"] = self.currentInfo[g]["ipc"]
                 tmp_data[g + "_cpu"] = rM.get_cfs_quota(g)
                 tmp_data[g + "_llc"] = self.llcM.cosLlcNum(llcM.groupCOS[g])
+                tmp_data[g + "_sla"] = self.slas[g]
             experi_data.append(tmp_data)
             self.check_cpu(sample)
             #print("round in a period is:" + str(total_round))
@@ -213,7 +222,7 @@ class CpuController:
         #print("start_cpu_throttle_anaylyst")
         #if self.enable_data_driven and policy.estimator.workable():
         if self.enable_data_driven:
-            policy.throttle_target_select_setup(self.throttled_group, self.llcM)
+            policy.throttle_target_select_setup(self.throttled_group, self.llcM,self.slas[group])
         else:
             if policy.rule_update(self.throttled_group, self.llcM) == -1:
                 print("Err: toplev_update Fail")
@@ -227,6 +236,7 @@ if __name__ == '__main__':
         parser.add_argument('--config', type=str, default="./testcon")
         parser.add_argument('--enable-training')
         parser.add_argument('--enable-data-driven')
+        parser.add_argument('--enable-auto-sla')
         parser.add_argument('--samples', type=str, default="",
                             help="the groups needed to control")  # here the groups shouldn't be full path,ex: app1 not /cpu/app1
         parser.add_argument('--accuracy', type=float, default=0.5, help="the threshold of model's accuracy")
@@ -236,6 +246,7 @@ if __name__ == '__main__':
         args = parser.parse_args()
         en_data = args.enable_data_driven != None
         en_tra = args.enable_training != None
+        en_auto_sla = args.enable_auto_sla != None
         samples = args.samples.strip().split(',')
         s_f = samples
 
@@ -249,10 +260,13 @@ if __name__ == '__main__':
             rC.startProcs("cpu,perf_event,cpuset", s, "/home/sauron/MAGI/run_" + s)
             time.sleep(1)
             if s == "xapian":
-                cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
+                cli_cmd = {'/home/sauron/tailbench-v0.9/' + s + '/run_' + s + '_client'}
                 newP = Process(target=run_com, args=(cli_cmd,True))
                 newP.start()
-
+            if s == "sphinx":
+                cli_cmd = {'/home/sauron/tailbench-v0.9/' + s + '/run_' + s + '_client'}
+                newP = Process(target=run_com, args=(cli_cmd,True))
+                newP.start()
             if s == "memcached":
                 time.sleep(5)
                 cli_cmd = {'/home/sauron/MAGI/run_ycsb_memcached'}
@@ -268,7 +282,7 @@ if __name__ == '__main__':
                 print("Err: No enough LLC, maybe you need to change config file")
         time.sleep(3)
         # here samples are like : ["app1","app2"]
-        c = CpuController(controll_config, samples, en_data, en_tra, args.accuracy, args.sleep, args.sample_length,
+        c = CpuController(controll_config, samples, en_data, en_tra, en_auto_sla,args.accuracy, args.sleep, args.sample_length,
                           llcM)
         c.run()
     except Exception as err:
