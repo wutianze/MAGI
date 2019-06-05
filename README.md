@@ -1,8 +1,8 @@
 # MAGI
 # work to do:
-  - 更多的测试
+  - 尝试找一些可优化的地方
 # working on:  
-  - 模型优化，探索能使准确率上升的办法
+  - 更多的测试
   - xapian修改获取实时latency：在harness/client.cpp中Client::finiReq的sjrn代表了实时的延迟
 # work finished:
   - 基础环境搭建
