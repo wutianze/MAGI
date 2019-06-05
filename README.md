@@ -44,4 +44,6 @@
 ycsb使用时要注意，load动作的recordcount不知道为什么不能在命令行指定，必须要在配置的workload\*文件里指定，而run动作的operationcount可以在命令行里指定。
 
 # problems found now (* for not solved)
-  - \* accuracy一直提不上去，目前对于xapian来说是0.3-0.4左右，对mcf是0.8左右。
+  - accuracy一直提不上去，目前对于xapian来说是0.3-0.4左右，对mcf是0.8左右。
+    解决方法：降低神经网络深度，目前准确率不错
+  - 所有的分配都需要对应用绑定核，原因是因为pqos工具在监测的时候，只能以core为单位监测mb和llc，主要是rule模型会用到，可以尝试不绑定核，对分配应该没     有影响，可以以COS为单位。
