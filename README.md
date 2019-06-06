@@ -4,6 +4,7 @@
 # working on:  
   - 更多的测试
   - xapian修改获取实时latency：在harness/client.cpp中Client::finiReq的sjrn代表了实时的延迟
+  - 获取消耗llc等资源最多的应用，到底拿当前实时用的资源还是分配给它的资源。目前是实时用的资源
 # work finished:
   - 基础环境搭建
   - 应用数据采集/所需数据种类工具调研
