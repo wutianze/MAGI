@@ -1,6 +1,8 @@
 import subprocess
 
 #example input:cpu/app1, get all process(include tmp)
+
+# the return value may contain temp processes
 def get_group_pids(group):
     return subprocess.getoutput("sudo cat /sys/fs/cgroup/" + str(group) + "/cgroup.procs").strip().split()
 

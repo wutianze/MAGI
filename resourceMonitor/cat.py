@@ -6,6 +6,22 @@ import resourceMonitor as rM
 def getCpuInfo(pid):
     return subprocess.getoutput('sudo pqos -I -t1 -I -p all:'+str(pid))
 
+# pids like [0,1,2]
+# this function must run in kernel version >=  4.12
+def getPidsLlc(pids):
+    toHandle = []
+    for p in pids:
+        toHandle += subprocess.getoutput('sudo pqos -I -t 1 -p llc:' + str(p)).strip().split(
+            '\n')
+
+    res = {}
+
+    for line in toHandle:
+        con = line.split()
+        if str(con[0]).isdigit():
+            res[int(con[0])] = float(con[-1])
+    return res
+
 # cores like [0,1,2]
 def getCoresLlc(cores):
     toHandle = subprocess.getoutput('sudo pqos -I -t 1 -m llc:' + ','.join([str(i) for i in cores])).strip().split('\n')
@@ -34,6 +50,14 @@ def getGroupsSumLlc(group):
     if isinstance(cores,str):
         return -1
     llcs = getCoresLlc(cores)
+    res = 0.0
+    for k in llcs.keys():
+        res += float(llcs[k])
+    return res
+
+def getGroupsSumLlc_v2(group):
+    pids = rM.get_group_pids(group)
+    llcs = getPidsLlc(pids)
     res = 0.0
     for k in llcs.keys():
         res += float(llcs[k])
@@ -119,4 +143,5 @@ def findGroupConsumeMostMbl(groups,ex):
 if __name__ == '__main__':
     #grps = ["/cpu/app1","/cpu/app2"]
     #findGroupConsumeMostLlc(grps,"")
-    getCoresMbl([3,4])
+    #getCoresMbl([3,4])
+    print(getPidsLlc([1,2222]))
