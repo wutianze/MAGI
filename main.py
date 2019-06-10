@@ -244,9 +244,9 @@ if __name__ == '__main__':
                             help="how many seconds the sampling measurement should cover")
         parser.add_argument('--sleep', type=int, default=2, help="pause sleep seconds between each round")
         args = parser.parse_args()
-        en_data = args.enable_data_driven != None
-        en_tra = args.enable_training != None
-        en_auto_sla = args.enable_auto_sla != None
+        #en_data = args.enable_data_driven != None
+        #en_tra = args.enable_training != None
+        #en_auto_sla = args.enable_auto_sla != None
         samples = args.samples.strip().split(',')
         s_f = samples
 
@@ -282,7 +282,7 @@ if __name__ == '__main__':
                 print("Err: No enough LLC, maybe you need to change config file")
         time.sleep(3)
         # here samples are like : ["app1","app2"]
-        c = CpuController(controll_config, samples, en_data, en_tra, en_auto_sla,args.accuracy, args.sleep, args.sample_length,
+        c = CpuController(controll_config, samples, args.enable_data_driven, args.enable_training, args.enable_auto_sla,args.accuracy, args.sleep, args.sample_length,
                           llcM)
         c.run()
     except Exception as err:
