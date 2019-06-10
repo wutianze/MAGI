@@ -1,9 +1,10 @@
 # MAGI
 # work to do:
-  - 更多的测试
+  - 尝试找一些可优化的地方
 # working on:  
-  - 模型优化，探索能使准确率上升的办法
+  - 更多的测试
   - xapian修改获取实时latency：在harness/client.cpp中Client::finiReq的sjrn代表了实时的延迟
+  - 获取消耗llc等资源最多的应用，到底拿当前实时用的资源还是分配给它的资源。目前是实时用的资源
 # work finished:
   - 基础环境搭建
   - 应用数据采集/所需数据种类工具调研
@@ -14,6 +15,7 @@
 # project init
   - 各种检测工具都需要sudo
   - pqos工具安装
+    - kernel版本需要注意，要4.10以上才能支持os iface上的一些特性，而且需要在config里修改RDT对应项。
     - resourceControll中常量值须根据实际机器修改
   - perf工具安装
   - pmu工具安装
@@ -43,4 +45,6 @@
 ycsb使用时要注意，load动作的recordcount不知道为什么不能在命令行指定，必须要在配置的workload\*文件里指定，而run动作的operationcount可以在命令行里指定。
 
 # problems found now (* for not solved)
-  - \* accuracy一直提不上去，目前对于xapian来说是0.3-0.4左右，对mcf是0.8左右。
+  - accuracy一直提不上去，目前对于xapian来说是0.3-0.4左右，对mcf是0.8左右。
+    解决方法：降低神经网络深度，目前准确率不错
+  - 所有的分配都需要对应用绑定核，原因是因为pqos工具在监测的时候，只能以core为单位监测mb和llc，主要是rule模型会用到，可以尝试不绑定核，对分配应该没     有影响，可以以COS为单位。
