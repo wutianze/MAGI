@@ -4,7 +4,7 @@ sys.path.append("..")
 import resourceMonitor as rM
 
 def getCpuInfo(pid):
-    return subprocess.getoutput('sudo pqos -I -t1 -I -p all:'+str(pid))
+    return subprocess.getoutput('sudo pqos -I -t1 -I -p all:'+str(pid)) 
 
 # pids like [0,1,2]
 # this function must run in kernel version >=  4.12
