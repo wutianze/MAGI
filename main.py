@@ -257,19 +257,19 @@ if __name__ == '__main__':
             rC.createCgroup("cpu,perf_event,cpuset", s)
             rC.cpusSet(avaCpus.pop(), s)
             rC.cpusetMemsSet(0, s)
-            rC.startProcs("cpu,perf_event,cpuset", s, "/home/sauron/MAGI/run_" + s)
+            rC.startProcs("cpu,perf_event,cpuset", s, "/home/zzf/MAGI/run_" + s)
             time.sleep(1)
             if s == "xapian":
-                cli_cmd = {'/home/sauron/tailbench-v0.9/' + s + '/run_' + s + '_client'}
+                cli_cmd = {'/home/zzf/tailbench-v0.9/' + s + '/run_' + s + '_client'}
                 newP = Process(target=run_com, args=(cli_cmd,True))
                 newP.start()
             if s == "sphinx":
-                cli_cmd = {'/home/sauron/tailbench-v0.9/' + s + '/run_' + s + '_client'}
+                cli_cmd = {'/home/zzf/tailbench-v0.9/' + s + '/run_' + s + '_client'}
                 newP = Process(target=run_com, args=(cli_cmd,True))
                 newP.start()
             if s == "memcached":
                 time.sleep(5)
-                cli_cmd = {'/home/sauron/MAGI/run_ycsb_memcached'}
+                cli_cmd = {'/home/zzf/MAGI/run_ycsb_memcached'}
                 newP = Process(target=run_com, args=(cli_cmd,False))
                 newP.start()
 

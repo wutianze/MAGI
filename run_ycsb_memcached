@@ -1,5 +1,5 @@
 #! /bin/bash
-cd /home/sauron/YCSB/
-/home/sauron/YCSB/bin/ycsb load memcached -P /home/sauron/YCSB/workloads/workloadMagi -p "memcached.hosts=127.0.0.1" -p "memcached.port=11211"
+cd /home/zzf/YCSB/
+/home/zzf/YCSB/bin/ycsb load memcached -P /home/zzf/YCSB/workloads/workloadMagi -p "memcached.hosts=127.0.0.1" -p "memcached.port=11211"
 #7 9
-/home/sauron/YCSB/bin/ycsb run memcached -P /home/sauron/YCSB/workloads/workloadMagi -p "memcached.hosts=127.0.0.1" -p "memcached.port=11211" -threads 10 -p "operationcount=99999999"
+/home/zzf/YCSB/bin/ycsb run memcached -P /home/zzf/YCSB/workloads/workloadMagi -p "memcached.hosts=127.0.0.1" -p "memcached.port=11211" -threads 10 -p "operationcount=99999999"
