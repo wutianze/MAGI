@@ -19,6 +19,22 @@ def getPidsLlc(pids):
     for line in toHandle:
         con = line.split()
         if str(con[0]).isdigit():
+            res[int(con[0])] = float(con[-1]) #the result is 0.0k, how to deal with the 'k'
+    return res
+
+# pid like [0,1,2]
+# this function must run in kernel version >= 4.12
+# added by Lemover
+def getPidsMbl(pids):
+    toHandle = []
+    for p in pids:
+        toHandle += subprocess.getoutput('sudo pqos -I -t 1 -p mbl:' + str(p)).strip().split('\n')
+
+    res = {}
+
+    for line in toHandle:
+        con = line.split()
+        if str(con[0]).isdigit():
             res[int(con[0])] = float(con[-1])
     return res
 
@@ -74,6 +90,14 @@ def getGroupsSumMbl(group):
         res += float(mbls[k])
     return res
 
+def getGroupsSumMbl_v2(group):
+    pids = rM.get_group_pids(group)
+    mbls = getPidsMbl(pids)
+    res = 0.0
+    for k in mbls.keys():
+        res += float(mbls[k])
+    return res
+
 '''
 # groups are like ["cpu/app1","perf_event/app2"]
 # ! better not use
@@ -120,7 +144,8 @@ def findGroupConsumeMostLlc(groups,ex):
     for g in groups:
         if g == ex:
             continue
-        tmp = getGroupsSumLlc(g)
+        #tmp = getGroupsSumLlc(g)
+        tmp = getGroupsSumLlc_v2(g)
         if tmp >= mostLlc:
             res = g
             mostLlc = tmp
@@ -133,7 +158,8 @@ def findGroupConsumeMostMbl(groups,ex):
     for g in groups:
         if g == ex:
             continue
-        tmp = getGroupsSumMbl(g)
+        #tmp = getGroupsSumMbl(g)
+        tmp = getGroupsSumMbl_v2(g)
         if tmp >= mostMbl:
             res = g
             mostMbl = tmp
