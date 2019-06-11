@@ -186,7 +186,8 @@ class Policy:
         # memory-bound
         if float(curGI["ipc"]) < RULEIPCBOUND and float(
                 curGI["cache-misses"]) * 1000.0 / float(curGI["instructions"]) > RULEMPKIBOUND:
-            if float(rM.cat.getGroupsSumMbl(self.own)) / 1024.0 < RULEMEMBWBOUND:
+            #if float(rM.cat.getGroupsSumMbl(self.own)) / 1024.0 < RULEMEMBWBOUND:
+            if float(rM.cat.getGroupsSumMbl_v2(self.own)) / 1024.0 < RULEMEMBWBOUND:
                 # llc-bound
                 if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"][
                     "llc"] or llcM.moreLlc(
@@ -260,7 +261,8 @@ class Policy:
             #print("In Backend_bound")
             if float(curGI["ipc"]) < RULEIPCBOUND and float(curGI["cache-misses"])*1000.0/float(curGI["instructions"]) > RULEMPKIBOUND:
                 # llc-bound
-                if float(rM.cat.getGroupsSumMbl(self.own))/1024.0 < RULEMEMBWBOUND:
+                #if float(rM.cat.getGroupsSumMbl(self.own))/1024.0 < RULEMEMBWBOUND:
+                if float(rM.cat.getGroupsSumMbl_v2(self.own))/1024.0 < RULEMEMBWBOUND:
                     # different from paper,need to find a better way
                     if llcM.cosLlcNum(llcM.groupCOS[self.own]) >= self.controlConfig[self.own]["maximum_setups"]["llc"] or llcM.moreLlc(llcM.groupCOS[self.own], int((self.controlConfig[self.own]["maximum_setups"]["llc"] - llcM.cosLlcNum(llcM.groupCOS[self.own])) / 4) + 1) == -1:
                         badGroup = rM.findGroupConsumeMostLlc(self.groups,self.own)
