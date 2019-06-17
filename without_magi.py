@@ -33,9 +33,9 @@ if __name__ == '__main__':
             rC.createCgroup("cpu,perf_event,cpuset", s)
             rC.cpusSet(avaCpus.pop(), s)
             rC.cpusetMemsSet(0, s)
-            rC.startProcs("cpu,perf_event,cpuset", s, "/home/zzf/MAGI/run_" + s)
+            rC.startProcs("cpu,perf_event,cpuset", s, "/home/sauron/MAGI/run_" + s)
             time.sleep(3)
-            cli_cmd = {'/home/zzf/tailbench-v0.9/xapian/run_xapian_client'}
+            cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
             newP = Process(target=new_help, args=cli_cmd)
             newP.start()
 
@@ -49,46 +49,46 @@ if __name__ == '__main__':
         elif control == 1:#xapian run alone, without resource limit
             s_f = ["xapian"]
             rC.createCgroup("perf_event", s)
-            rC.startProcs("perf_event", s, "/home/zzf/MAGI/run_" + s)
+            rC.startProcs("perf_event", s, "/home/sauron/MAGI/run_" + s)
             time.sleep(3)
-            cli_cmd = {'/home/zzf/tailbench-v0.9/xapian/run_xapian_client'}
+            cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
             newP = Process(target=new_help, args=cli_cmd)
             newP.start()
 
         elif control == 2:# xapian run with mcf ,without resource limit and in all cores
             s_f = ["xapian","mcf"]
             rC.createCgroup("perf_event", s)
-            rC.startProcs("perf_event", s, "/home/zzf/MAGI/run_" + s)
+            rC.startProcs("perf_event", s, "/home/sauron/MAGI/run_" + s)
             time.sleep(3)
-            cli_cmd = {'/home/zzf/tailbench-v0.9/xapian/run_xapian_client'}
+            cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
             newP = Process(target=new_help, args=cli_cmd)
             newP.start()
 
             rC.createCgroup("perf_event", s1)
-            rC.startProcs("perf_event", s1, "/home/zzf/MAGI/run_" + s1)
+            rC.startProcs("perf_event", s1, "/home/sauron/MAGI/run_" + s1)
             rC.createCgroup("perf_event", s2)
-            rC.startProcs("perf_event", s2, "/home/zzf/MAGI/run_" + s2)
+            rC.startProcs("perf_event", s2, "/home/sauron/MAGI/run_" + s2)
 
         elif control == 3:# xapian run with mcf ,without resource limit and in own core
             s_f = ["xapian", "mcf"]
             rC.createCgroup("perf_event,cpuset", s)
             rC.cpusSet(avaCpus.pop(), s)
             rC.cpusetMemsSet(0, s)
-            rC.startProcs("perf_event,cpuset", s, "/home/zzf/MAGI/run_" + s)
+            rC.startProcs("perf_event,cpuset", s, "/home/sauron/MAGI/run_" + s)
             time.sleep(3)
-            cli_cmd = {'/home/zzf/tailbench-v0.9/xapian/run_xapian_client'}
+            cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
             newP = Process(target=new_help, args=cli_cmd)
             newP.start()
 
             rC.createCgroup("perf_event,cpuset", s1)
             rC.cpusSet(avaCpus.pop(), s1)
             rC.cpusetMemsSet(0, s1)
-            rC.startProcs("perf_event,cpuset", s1, "/home/zzf/MAGI/run_" + s1)
+            rC.startProcs("perf_event,cpuset", s1, "/home/sauron/MAGI/run_" + s1)
 
             rC.createCgroup("perf_event,cpuset", s2)
             rC.cpusSet(avaCpus.pop(), s2)
             rC.cpusetMemsSet(0, s2)
-            rC.startProcs("perf_event,cpuset", s2, "/home/zzf/MAGI/run_" + s2)
+            rC.startProcs("perf_event,cpuset", s2, "/home/sauron/MAGI/run_" + s2)
 
         elif control == 4:
             s_f = [s1,s4,s2]
@@ -96,24 +96,24 @@ if __name__ == '__main__':
             #rC.createCgroup("perf_event", s1)
             #rC.cpusSet(avaCpus.pop(), s1)
             #rC.cpusetMemsSet(0, s1)
-            #rC.startProcs("perf_event", s1, "/home/zzf/MAGI/run_" + s1)
+            #rC.startProcs("perf_event", s1, "/home/sauron/MAGI/run_" + s1)
 
             #time.sleep(3)
             '''
             rC.createCgroup("perf_event,cpu,cpuset", s1)
             rC.cpusSet(avaCpus.pop(), s1)
             rC.cpusetMemsSet(0, s1)
-            rC.startProcs("perf_event,cpu,cpuset", s1, "/home/zzf/MAGI/run_" + s1)
+            rC.startProcs("perf_event,cpu,cpuset", s1, "/home/sauron/MAGI/run_" + s1)
 
             rC.createCgroup("perf_event,cpu,cpuset", s2)
             rC.cpusSet(avaCpus.pop(), s2)
             rC.cpusetMemsSet(0, s2)
-            rC.startProcs("perf_event,cpu,cpuset", s2, "/home/zzf/MAGI/run_" + s2)
+            rC.startProcs("perf_event,cpu,cpuset", s2, "/home/sauron/MAGI/run_" + s2)
 '''
             rC.createCgroup("perf_event,cpu,cpuset", s4)
             rC.cpusSet(avaCpus.pop(), s4)
             rC.cpusetMemsSet(0, s4)
-            rC.startProcs("perf_event,cpu,cpuset", s4, "/home/zzf/MAGI/run_" + s4)
+            rC.startProcs("perf_event,cpu,cpuset", s4, "/home/sauron/MAGI/run_" + s4)
             #time.sleep(3)
 
             # initial period is 100000, give app the maximum
@@ -129,7 +129,7 @@ if __name__ == '__main__':
                 print("Err: No enough LLC, maybe you need to change config file")
 
             #time.sleep(5)
-            #print(subprocess.getoutput("/home/zzf/MAGI/run_"+s5))
+            #print(subprocess.getoutput("/home/sauron/MAGI/run_"+s5))
 
 
         '''
@@ -137,9 +137,9 @@ if __name__ == '__main__':
         rC.createCgroup("cpu,perf_event,cpuset", s)
         rC.cpusSet(avaCpus.pop(), s)
         rC.cpusetMemsSet(0, s)
-        rC.startProcs("cpu,perf_event,cpuset", s, "/home/zzf/MAGI/run_" + s)
+        rC.startProcs("cpu,perf_event,cpuset", s, "/home/sauron/MAGI/run_" + s)
         time.sleep(1)
-        cli_cmd = {'/home/zzf/tailbench-v0.9/xapian/run_xapian_client'}
+        cli_cmd = {'/home/sauron/tailbench-v0.9/xapian/run_xapian_client'}
         newP = Process(target=new_help, args=cli_cmd)
         newP.start()
 
@@ -156,7 +156,7 @@ if __name__ == '__main__':
     except Exception as err:
         print(err)
     finally:
-        #resu = subprocess.getoutput("python2 /home/zzf/tailbench-v0.9/utilities/parselats.py /home/zzf/MAGI/lats.bin").strip().split()
+        #resu = subprocess.getoutput("python2 /home/sauron/tailbench-v0.9/utilities/parselats.py /home/sauron/MAGI/lats.bin").strip().split()
         #print(resu[3])
         #print(resu[8])
 

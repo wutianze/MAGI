@@ -16,7 +16,7 @@ RULEMEMBWBOUND = 35
 mainExTar = ["lock_loads","fp_uops","branch","l1_misses","l2_misses","stall_sb","branch_misp","machine_clear"]
 subTar = ["instructions","cycles","loads_and_stores","cache-misses"]
 
-#es.SAVE_PATH = "/home/zzf/MAGI/stored_data/xapian_mcf/"
+#es.SAVE_PATH = "/home/sauron/MAGI/stored_data/xapian_mcf/"
 
 class Policy:
     def __init__(self,group,groups,control_config,accuracy):
