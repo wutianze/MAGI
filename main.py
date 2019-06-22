@@ -254,10 +254,12 @@ if __name__ == '__main__':
         llcM = rC.cat.llcManager(5)
 
         for s in samples:
-            rC.createCgroup("cpu,perf_event,cpuset", s)
-            rC.cpusSet(avaCpus.pop(), s)
-            rC.cpusetMemsSet(0, s)
-            rC.startProcs("cpu,perf_event,cpuset", s, "/home/zzf/MAGI/run_" + s)
+            #rC.createCgroup("cpu,perf_event,cpuset", s)
+            rC.createCgroup("cpu,perf_event", s) #remove cpuset
+            #rC.cpusSet(avaCpus.pop(), s) #remove cpusSet
+            #rC.cpusetMemsSet(0, s) #remove cpusetMemset ?? still problem, why always the '0' nodes
+            #rC.startProcs("cpu,perf_event,cpuset", s, "/home/zzf/MAGI/run_" + s)
+            rC.startProcs("cpu,perf_event", s, "/home/zzf/MAGI/run_" + s) #start the removed proc
             time.sleep(1)
             if s == "xapian":
                 cli_cmd = {'/home/zzf/tailbench-v0.9/' + s + '/run_' + s + '_client'}
@@ -275,7 +277,7 @@ if __name__ == '__main__':
 
 
             # initial period is 100000, give app the maximum
-            rC.cfs_quotaSet(s, int((controll_config[s]["maximum_setups"]["cpu"] + controll_config[s]["minimum_setups"]["cpu"]) / 2))
+            rC.cfs_quotaSet(s, int((controll_config[s]["maximum_setups"]["cpu"] + controll_config[s]["minimum_setups"]["cpu"]) / 2)) #unknown: remove cpu, so the cfs_quotaSet is useless, maybe remove cpuset, and remain the cpu
             pids = rM.get_group_pids("perf_event/" + s)
             pa_pids = ','.join([str(i) for i in pids])
             if llcM.givePidSepLlc(pa_pids, int((controll_config[s]["maximum_setups"]["llc"] + controll_config[s]["minimum_setups"]["llc"])/2), s) == -1:
@@ -296,7 +298,8 @@ if __name__ == '__main__':
             for pid in pids:
                 if subprocess.getstatusoutput("sudo kill -9 " + str(pid))[0] != 0:
                     print("Err: Closing test process fail, pid: " + str(pid))
-            rC.deleteCgroup("cpu,perf_event,cpuset", s)
+            #rC.deleteCgroup("cpu,perf_event,cpuset", s)
+            rC.deleteCgroup("cpu,perf_event", s) #remove cpuset
 
 
 

@@ -17,7 +17,7 @@ def get_group_pid(group, cmd):
             if str(psOut).strip().split()[-1] == str(cmd):
                 return p
 
-# the input should be like app1
+# the input should be like app1, may not used if pid takes over core
 def get_group_core(group):
     toHandle = subprocess.getoutput("sudo cat /sys/fs/cgroup/cpuset/" + group + "/cpuset.cpus")
     if toHandle.find("-") == -1:
