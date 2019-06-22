@@ -16,7 +16,7 @@ RULEMEMBWBOUND = 35
 mainExTar = ["lock_loads","fp_uops","branch","l1_misses","l2_misses","stall_sb","branch_misp","machine_clear"]
 subTar = ["instructions","cycles","loads_and_stores","cache-misses"]
 
-#es.SAVE_PATH = "/home/sauron/MAGI/stored_data/xapian_mcf/"
+#es.SAVE_PATH = "/home/zzf/MAGI/stored_data/xapian_mcf/"
 
 class Policy:
     def __init__(self,group,groups,control_config,accuracy):
@@ -118,7 +118,7 @@ class Policy:
             mainNum += len(subTar) - 1
         diffSum = np.sum(np.array(sepDiff))
         std_entropy = 0.0
-        for d in sepDiff:# H = - ∑  Pi * log2 Pi
+        for d in sepDiff:
             if float(diffSum) == 0:
                 return -1
             p = float(d)/float(diffSum)

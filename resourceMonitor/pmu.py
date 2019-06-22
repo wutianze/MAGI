@@ -1,6 +1,6 @@
 import subprocess
 
-toplevPath = "/home/sauron/MAGI/pmu-tools/toplev.py "
+toplevPath = "/home/zzf/MAGI/pmu-tools/toplev.py "
 
 def topDownGroupCal(currentInfo):
     if currentInfo["cycles"] <= 0 :
