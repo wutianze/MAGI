@@ -20,7 +20,7 @@ def new_help(cmd):
 if __name__ == '__main__':
     s_f = []
     try:
-        control = 4
+        control = 6
         llcM = rC.cat.llcManager(4)
         s = "xapian"
         s1 = "mcf"
@@ -28,6 +28,7 @@ if __name__ == '__main__':
         s3 = "memaslap"
         s4 = "memcached"
         s5 = "ycsb_memcached"
+        s6 = "sphinx"
         if control == 0:# xapian run alone ,with resource limit and in one core
             s_f = ["xapian"]
             rC.createCgroup("cpu,perf_event,cpuset", s)
@@ -131,7 +132,132 @@ if __name__ == '__main__':
             #time.sleep(5)
             #print(subprocess.getoutput("/home/zzf/MAGI/run_"+s5))
 
+        elif control == 5:#sphinx run alone, with resource limit and in one core
+            s_f = ["sphinx"]
+            rC.createCgroup("cpu,perf_event,cpuset", s6)
+            rC.cpusSet(avaCpus.pop(), s6)
+            rC.cpusetMemsSet(0, s6)
+            rC.startProcs("cpu,perf_event,cpuset", s6, "/home/zzf/MAGI/run_" + s6)
+            time.sleep(3)
+            cli_cmd = {'/home/zzf/tailbench-v0.9/sphinx/run_sphinx_client'}
+            newP = Process(target=new_help, args=cli_cmd)
+            newP.start()
+            
+            #initial period is 100000, give the maximum #?
+            rC.cfs_quotaSet(s6, 60000)
+            pids = rM.get_group_pids("perf_event/" + s6)
+            pa_pids = ','.join([str(i) for i in pids])
+            if llcM.givePidSepLlc(pa_pids, 5, s6) == -1:
+                print("Err: nNo enough LLC, maybe you need to change the config file")
+        
+        elif control == 6:#sphinx run alone, without resource limit
+            s_f = ["sphinx"]
+            rC.createCgroup("perf_event", s6)
+            rC.startProcs("perf_event", s6, "/home/zzf/MAGI/run_" + s6)
+            time.sleep(3)
+            cli_cmd = {'/home/zzf/tailbench-v0.9/sphinx/run_sphinx_client'}
+            newP = Process(target=new_help, args=cli_cmd)
+            newP.start()
 
+        elif control == 7:# sphinx run with mcf, core isolation but sharing LLC&Memory
+            s_f = ["sphinx", "mcf"]
+            rC.createCgroup("perf_event,cpuset", s6)
+            rC.cpusSet(avaCpus.pop(), s6)
+            rC.cpusetMemsSet(0,s6)
+            rC.startProcs("perf_event,cpuset",s6,"/home/zzf/MAGI/run_" + s6)
+            time.sleep(1)
+            cli_cmd = {'/home/zzf/tailbench-v0.9/sphinx/run_sphinx_client'}
+            newP = Process(target=new_help, args=cli_cmd)
+            newP.start()
+            
+            rC.createCgroup("perf_event,cpuset", s1)
+            rC.cpusSet(avaCpus.pop(), s1)
+            rC.cpusetMemsSet(0, s1)
+            rC.startProcs("perf_event,cpuset", s1, "/home/zzf/MAGI/run_" + s1)
+
+        elif control == 8:#sphinx run with mcf&lbm, core isolation but sharing LLC&Memory
+            s_f = ["sphinx", "mcf", "lbm"]
+            rC.createCgroup("perf_event,cpuset", s6)
+            rC.cpusSet(avaCpus.pop(), s6)
+            rC.cpusetMemsSet(0,s6)
+            rC.startProcs("perf_event,cpuset",s6,"/home/zzf/MAGI/run_" + s6)
+            time.sleep(1)
+            cli_cmd = {'/home/zzf/tailbench-v0.9/sphinx/run_sphinx_client'}
+            newP = Process(target=new_help, args=cli_cmd)
+            newP.start()
+            
+            rC.createCgroup("perf_event,cpuset", s1)
+            rC.cpusSet(avaCpus.pop(), s1)
+            rC.cpusetMemsSet(0, s1)
+            rC.startProcs("perf_event,cpuset", s1, "/home/zzf/MAGI/run_" + s1)
+
+            rC.createCgroup("perf_event,cpuset", s2)
+            rC.cpusSet(avaCpus.pop(), s2)
+            rC.cpusetMemsSet(0, s2)
+            rC.startProcs("perf_event,cpuset", s2, "/home/zzf/MAGI/run_" + s2)
+        
+        elif control == 9:#sphinx run with mcf, core isolation, not sharing LLC&Memory
+            s_f = ["sphinx", "mcf"]
+            rC.createCgroup("perf_event,cpuset", s6)
+            rC.cpusSet(avaCpus.pop(), s6)    
+            rC.cpusetMemsSet(0,s6)
+            rC.startProcs("perf_event,cpuset",s6,"/home/zzf/MAGI/run_" + s6)
+            time.sleep(1)
+            cli_cmd = {'/home/zzf/tailbench-v0.9/sphinx/run_sphinx_client'}
+            newP = Process(target=new_help, args=cli_cmd)
+            newP.start()    
+            
+            pids = rM.get_group_pids("perf_event/" + s6)
+            pa_pids = ','.join([str(i) for i in pids])
+            if llcM.givePidSepLlc(pa_pids, 4, s6) == -1:
+                print("Err: No enough LLC, maybe you need to change config file")
+
+
+            rC.createCgroup("perf_event,cpuset", s1)
+            rC.cpusSet(avaCpus.pop(), s1)
+            rC.cpusetMemsSet(0, s1)
+            rC.startProcs("perf_event,cpuset", s1, "/home/zzf/MAGI/run_" + s1)
+            time.sleep(1)
+            pids = rM.get_group_pids("perf_event/" + s1)
+            pa_pids = ','.join([str(i) for i in pids])
+            if llcM.givePidSepLlc(pa_pids, 4, s1) == -1:
+                print("Err: No enough LLC, maybe you need to change config file")
+        
+        elif control == 10:#sphinx run with mcf&lbm, core isolation, not sharing LLC&Memory
+            s_f = ["sphinx", "mcf", "lbm"]
+            rC.createCgroup("perf_event,cpuset", s6)
+            rC.cpusSet(avaCpus.pop(), s6)
+            rC.cpusetMemsSet(0,s6)
+            rC.startProcs("perf_event,cpuset",s6,"/home/zzf/MAGI/run_" + s6)
+            time.sleep(1)
+            cli_cmd = {'/home/zzf/tailbench-v0.9/sphinx/run_sphinx_client'}
+            newP = Process(target=new_help, args=cli_cmd)
+            newP.start()
+            pids = rM.get_group_pids("perf_event/" + s6)
+            pa_pids = ','.join([str(i) for i in pids])
+            if llcM.givePidSepLlc(pa_pids, 4, s6) == -1:
+                print("Err: No enough LLC, maybe you need to change config file")
+
+            rC.createCgroup("perf_event,cpuset", s2)
+            rC.cpusSet(avaCpus.pop(), s2)
+            rC.cpusetMemsSet(0, s2)
+            rC.startProcs("perf_event,cpuset", s2, "/home/zzf/MAGI/run_" + s2)
+            time.sleep(1)
+            pids = rM.get_group_pids("perf_event/" + s2)
+            pa_pids = ','.join([str(i) for i in pids])
+            if llcM.givePidSepLlc(pa_pids, 4, s2) == -1:
+                print("Err: No enough LLC, maybe you need to change config file")
+            
+            rC.createCgroup("perf_event,cpuset", s1) 
+            rC.cpusSet(avaCpus.pop(), s1)
+            rC.cpusetMemsSet(0, s1)
+            rC.startProcs("perf_event,cpuset", s1, "/home/zzf/MAGI/run_" + s1)
+            time.sleep(1)
+            pids = rM.get_group_pids("perf_event/" + s1)
+            pa_pids = ','.join([str(i) for i in pids])
+            if llcM.givePidSepLlc(pa_pids, 4, s1) == -1:
+                print("Err: No enough LLC, maybe you need to change config file")
+            
         '''
         s = "mcf"
         rC.createCgroup("cpu,perf_event,cpuset", s)
@@ -150,9 +276,10 @@ if __name__ == '__main__':
         if llcM.givePidSepLlc(pa_pids, 6, s) == -1:
             print("Err: No enough LLC, maybe you need to change config file")
 '''
-
-        while True:
-            time.sleep(10)
+        newP.join()
+        print("application done")
+        #while True:
+            #time.sleep(10)
     except Exception as err:
         print(err)
     finally:

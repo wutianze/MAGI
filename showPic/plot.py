@@ -67,8 +67,13 @@ if __name__ == '__main__':
     plt.subplot(311)
     plt.grid(linestyle=':')
     for a in apps:
-        plt.plot(x, df[a+"_ipc"], ">-", label=a)
-    #plt.plot(x, Fi["memcached"]["sla"], "r-", label='SLA')
+        plt.plot(x, df[a+"_ipc"], "-", label=a)
+    #sla_x = np.linspace(start=0,endpoint=False,retstep=False,dtype=None)
+    #sla_y = 0.21
+    #plt.plot(sla_x,sla_y,"-",color='r',label='SLA')
+    sla_y = 0.37*np.ones([len(x)])
+    plt.plot(x, sla_y, "r-", label='SLA')
+    #plt.plot(x, df["xapian"]["sla"], "r-", label='SLA')
     plt.title("Performance of Apps")
     plt.xlabel("time")
     plt.ylabel("ipc")
@@ -77,7 +82,7 @@ if __name__ == '__main__':
     plt.subplot(312)
     plt.grid(linestyle=':')
     for a in apps:
-        plt.plot(x, df[a + "_llc"], ">-", label=a)
+        plt.plot(x, df[a + "_llc"], "-", label=a)
     #plt.plot(x, Fi["lbm"]["llc"], ">-", label="lbm")
     plt.title("LLC of Apps")
     plt.xlabel("time")
@@ -87,7 +92,7 @@ if __name__ == '__main__':
     plt.subplot(313)
     plt.grid(linestyle=':')
     for a in apps:
-        plt.plot(x, df[a + "_cpu"], ">-", label=a)
+        plt.plot(x, df[a + "_cpu"], "-", label=a)
     #plt.plot(x, Fi["lbm"]["cpu"], ">-", label="lbm")
     plt.title("Cpu of Apps")
     plt.xlabel("time")

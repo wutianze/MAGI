@@ -236,7 +236,7 @@ class Policy:
 
     def throttle_target_select_setup(self, throttled_group, llcM,sla):
         #print("throttle_target_select_setup")
-        badGroup = self.select_throttle_target()
+        badGroup = self.select_throttle_target(sla)
         if badGroup == None or badGroup == "":
             # self.logger.info("Group %s policy %s returns None,fall back",group,policy.name)
             print("Have no targets")

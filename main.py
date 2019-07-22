@@ -55,12 +55,11 @@ class CpuController:
         self.controlConfig = controll_config
         self.slas = {}
 
-
         self.policies = {}
         for g in samples:
             self.policies[g] = po.Policy(g, self.allGroups, controll_config, accuracy)
             self.slas[g] = controll_config[g]["SLA"]["ipc"]
-
+            
         self.currentInfo = {}
         self.llcM = llcM
 
@@ -84,7 +83,10 @@ class CpuController:
         self.currentInfo = tmp_info
         #print("get currentInfo")
         samples = []
+#print("try to add sample, currentInfo keys:" + str(self.currentInfo.keys()))
         for group in self.currentInfo.keys():
+            print(group + ": current ipc:" + str(self.currentInfo[group]["ipc"]) + " slas: " + str(self.slas[group]) + " controlConfig:" + str(self.controlConfig[group]["SLA"]["ipc"]))
+            #print(str(group) + ": current ipc:" + str(float(self.currentInfo[group]["ipc"])) + "slas:" + str(self.slas[group]["ipc"]))
             # now the sla depends on ipc=instructions/cycles
             if float(self.currentInfo[group]["ipc"]) < self.slas[group]:
                 samples.append(group)
@@ -176,9 +178,10 @@ class CpuController:
 
 
     def check_cpu(self,sample):
-        #print("check_cpu")
+#print("check_cpu")
+#        print("sample:" + str(sample))
         group = self.select_low_ipc_group(sample) #sample is a list filled with groups needed to be watched
-
+#        print("select low ipc group:" + str(group))
         if group is not None:
             self.start_cpu_throttle_analyst(group)
         elif self.relax_count >= 2:
@@ -189,7 +192,7 @@ class CpuController:
 
 
     def start_cpu_relax_analyst(self):
-        #print("start_cpu_relax_analyst")
+        print("start_cpu_relax_analyst")
         t = ""
         if len(self.throttled_group) == 0:
             t = random.choice(self.allGroups)
@@ -219,7 +222,7 @@ class CpuController:
 
     def start_cpu_throttle_analyst(self, group):
         policy = self.policies[group]
-        #print("start_cpu_throttle_anaylyst")
+        print("start_cpu_throttle_anaylyst")
         #if self.enable_data_driven and policy.estimator.workable():
         if self.enable_data_driven:
             policy.throttle_target_select_setup(self.throttled_group, self.llcM,self.slas[group])
@@ -275,9 +278,9 @@ if __name__ == '__main__':
                 newP = Process(target=run_com, args=(cli_cmd,False))
                 newP.start()
 
-
             # initial period is 100000, give app the maximum
             rC.cfs_quotaSet(s, int((controll_config[s]["maximum_setups"]["cpu"] + controll_config[s]["minimum_setups"]["cpu"]) / 2)) #unknown: remove cpu, so the cfs_quotaSet is useless, maybe remove cpuset, and remain the cpu
+#rC.cfs_quotaSet(s, int(controll_config[s]["maximum_setups"]["cpu"])) #unknown: remove cpu, so the cfs_quotaSet is useless, maybe remove cpuset, and rem    ain the cpu
             pids = rM.get_group_pids("perf_event/" + s)
             pa_pids = ','.join([str(i) for i in pids])
             if llcM.givePidSepLlc(pa_pids, int((controll_config[s]["maximum_setups"]["llc"] + controll_config[s]["minimum_setups"]["llc"])/2), s) == -1:
@@ -291,6 +294,8 @@ if __name__ == '__main__':
         print(err)
     finally:
         print("do finally")
+        if subprocess.getstatusoutput("sudo kill -9 " + str(newP.pid))[0] != 0:
+            print("Err: Closing the client process failed, pid: " + str(newP.pid))
         if subprocess.getstatusoutput("sudo pqos -I -R")[0] != 0:
             print("Err: Reset llc fail")
         for s in s_f:

@@ -4,7 +4,7 @@
 			"ipc":0.0
 			},
 		"minimum_setups":{
-			"cpu":40000,
+			"cpu":20000,
 			"llc":2
 			},
 		"maximum_setups":{
@@ -14,7 +14,7 @@
 		},
 	"xapian":{
 		"SLA":{
-			"ipc":0.14
+			"ipc":0.21
 			},
 		"minimum_setups":{
 			"cpu":40000,
@@ -27,15 +27,15 @@
 		},
 		"sphinx":{
 		"SLA":{
-			"ipc":0.14
+			"ipc":0.26
 			},
 		"minimum_setups":{
-			"cpu":40000,
-			"llc":3
+			"cpu":100000,
+			"llc":10
 			},
 		"maximum_setups":{
 			"cpu":100000,
-			"llc":9
+			"llc":12
 			}
 		},
 	"memcached":{
@@ -56,7 +56,7 @@
 			"ipc":0.0
 			},
 		"minimum_setups":{
-			"cpu":40000,
+			"cpu":20000,
 			"llc":2
 			},
 		"maximum_setups":{

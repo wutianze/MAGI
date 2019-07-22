@@ -199,7 +199,7 @@ class llcManager:
         for cos,pids in zip(coses, pidss):
             cmd += "pid:" + str(cos) + "=" + str(pids) + ";"
         cmd += "\""
-
+#print("debug " + cmd)
         if subprocess.getstatusoutput(cmd)[0] != 0:
             print("Err:assoProcessCOS Fail")
             return -1
