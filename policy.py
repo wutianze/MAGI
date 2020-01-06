@@ -115,7 +115,7 @@ class Policy:
                 sub1.append(x1[mainNum + j])
                 sub2.append(x2[mainNum + j])
             sepDiff.append(np.linalg.norm(np.array(sub1) - np.array(sub2)))
-            mainNum += len(subTar) - 1
+            mainNum += len(subTar)
         diffSum = np.sum(np.array(sepDiff))
         std_entropy = 0.0
         for d in sepDiff:# H = - ∑  Pi * log2 Pi
