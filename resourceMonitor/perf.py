@@ -53,9 +53,11 @@ def getInfoList(configs,time):
 def getInfo(group, sample_len):
     #print("getAllInfo start")
     cmd_str = "sudo " + perfPath + " stat -a -x'|'"
-    cmd_str += " -e "
-    cmd_str += ','.join(avaTar)
-    cmd_str += " -G " + group
+    #cmd_str += " -e "
+    for event in avaTar:
+        cmd_str += " -e " + event + " -G " + group 
+    #cmd_str += ','.join(avaTar)
+    #cmd_str += " -G " + group
     #print(cmd_str)
     forHandle = subprocess.getoutput(cmd_str + " sleep " + str(sample_len)).strip().split('\n')
     #print(forHandle)
